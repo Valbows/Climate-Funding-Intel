@@ -465,7 +465,9 @@ Status: Completed — 2025-08-08T03:27:32Z
    - [x] Telemetry integration (client-side): record counts, duration, status; insert into `TELEMETRY_TABLE` (default `pipeline_runs`)
    - [x] SQL migration file added for `pipeline_runs` with RLS (see `supabase/sql/001_pipeline_runs.sql`)
    - [x] Read policy migration draft for authenticated read (see `supabase/sql/002_pipeline_runs_policies.sql`)
-   - [x] Apply migrations in Supabase and add integration tests for telemetry insert
+   - [x] Apply migrations in Supabase
+   - [x] Index migration for telemetry table (see `supabase/sql/003_pipeline_runs_indexes.sql`)
+   - [ ] Add integration tests for telemetry insert
  - Phase 2: Automation & Scheduling — Status: Partially Completed — 2025-08-08T03:40:39Z
     - [x] Dockerize pipeline (`pipeline/Dockerfile`, `.dockerignore`)
     - [x] CI: GitHub Actions workflow to run unit tests on push/PR
