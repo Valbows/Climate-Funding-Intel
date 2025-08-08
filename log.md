@@ -138,3 +138,17 @@ Purpose: Centralized history of decisions, incidents, and fixes to prevent repea
 - Risk(s): None if secrets are missing—job exits early with a clear message.
 - Action Items: Configure repository secrets (`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_TABLE`, `GEMINI_API_KEY`, optional `MODEL`).
 - References: `.github/workflows/schedule.yml`, `plan.md` Phase 2 checklist.
+
+### 2025-08-08T09:06:50Z — Implement | DB Indexes
+- Summary: Added indexes on `pipeline_runs` to improve dashboard/query performance.
+- Change(s): `supabase/sql/003_pipeline_runs_indexes.sql` creating `idx_pipeline_runs_ts_desc` and `idx_pipeline_runs_model_ts_desc`.
+- Outcome: Verified in Supabase (`pg_indexes`) that both indexes exist.
+- Action Items: None.
+- References: `supabase/sql/003_pipeline_runs_indexes.sql`.
+
+### 2025-08-08T09:09:05Z — Implement | Retention
+- Summary: Added retention function to prune old telemetry rows older than N days (default 90).
+- Change(s): `supabase/sql/004_pipeline_runs_retention.sql` defines `public.prune_pipeline_runs(retention_days integer)`.
+- Decision(s): Scheduling not added yet; can be executed manually or via scheduled job later.
+- Action Items: Apply migration in Supabase SQL editor; optionally set up a scheduled call (e.g., pg_cron) to run daily.
+- References: `supabase/sql/004_pipeline_runs_retention.sql`.
