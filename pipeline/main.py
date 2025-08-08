@@ -27,6 +27,7 @@ from pipeline.agents.verifier import create_verifier
 from pipeline.tasks.research_task import create_research_task
 from pipeline.tasks.verification_task import create_verification_task
 from pipeline.supabase_client import upsert_funding_events
+from pipeline.models import FundingEvent, ValidationError
 
 
 def setup_logging() -> None:
@@ -205,30 +206,47 @@ def run_once_with_model(model_id: str) -> Dict[str, Any]:
         events = []
 
     raw_count = len(events)
-    valid_events, dropped_events = sanitize_events(events)
+    sanitized_valid, sanitized_dropped = sanitize_events(events)
     logging.info(
         "Sanitized events: %s valid, %s dropped (raw %s)",
-        len(valid_events),
-        len(dropped_events),
+        len(sanitized_valid),
+        len(sanitized_dropped),
         raw_count,
     )
-    if dropped_events:
+
+    # Pydantic validation stage: ensure strict schema prior to DB upsert
+    validated_events: List[Dict[str, Any]] = []
+    pydantic_dropped: List[Dict[str, Any]] = []
+    for e in sanitized_valid:
+        try:
+            fe = FundingEvent(**e)
+            validated_events.append(fe.to_db_dict())
+        except ValidationError as ve:
+            # Persist errors for offline debugging alongside sanitizer drops
+            pydantic_dropped.append({**e, "__reason": "pydantic_validation_error", "__errors": ve.errors()})
+
+    if pydantic_dropped:
+        logging.info("Pydantic validation dropped %s additional event(s)", len(pydantic_dropped))
+
+    # Combine drops and persist for inspection
+    combined_dropped = sanitized_dropped + pydantic_dropped
+    if combined_dropped:
         try:
             import json as _json
             drop_path = os.path.join(os.path.dirname(__file__), "dropped_events.json")
             with open(drop_path, "w", encoding="utf-8") as f:
-                _json.dump(dropped_events, f, ensure_ascii=False, indent=2)
+                _json.dump(combined_dropped, f, ensure_ascii=False, indent=2)
             logging.debug("Wrote dropped events to %s", drop_path)
         except Exception as persist_err:  # pragma: no cover
             logging.debug("Failed to persist dropped events: %s", persist_err)
 
-    if valid_events:
-        upsert_resp = upsert_funding_events(valid_events)
+    if validated_events:
+        upsert_resp = upsert_funding_events(validated_events)
         logging.info("Upsert response: %s", upsert_resp)
     else:
-        logging.info("No valid events after sanitization; skipping Supabase upsert.")
+        logging.info("No valid events after validation; skipping Supabase upsert.")
 
-    return {"events_count": len(valid_events), "dropped_count": len(dropped_events), "model": model_id}
+    return {"events_count": len(validated_events), "dropped_count": len(combined_dropped), "model": model_id}
 
 
 def run() -> Dict[str, Any]:
