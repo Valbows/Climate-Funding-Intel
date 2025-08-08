@@ -463,12 +463,13 @@ Status: Completed — 2025-08-08T03:27:32Z
    - [x] Pydantic schema for funding events (stronger validation)
    - [x] Integrate Pydantic validation gate in `pipeline/main.py` (post-sanitization)
    - [x] Telemetry integration (client-side): record counts, duration, status; insert into `TELEMETRY_TABLE` (default `pipeline_runs`)
-   - [ ] Create Supabase table `pipeline_runs` + policies (SQL migration) and add integration tests
+   - [x] SQL migration file added for `pipeline_runs` with RLS (see `supabase/sql/001_pipeline_runs.sql`)
+   - [ ] Apply migration in Supabase and add integration tests for telemetry insert
  - Phase 2: Automation & Scheduling — Status: Partially Completed — 2025-08-08T03:40:39Z
     - [x] Dockerize pipeline (`pipeline/Dockerfile`, `.dockerignore`)
     - [x] CI: GitHub Actions workflow to run unit tests on push/PR
     - [ ] Vercel Cron (primary) configured to trigger API route
-    - [ ] GitHub Actions schedule (interim/alt) to run pipeline container
+    - [x] GitHub Actions schedule (interim/alt) to run pipeline container
     - [ ] Secrets configured in GitHub/Vercel project settings
     - [ ] Alerts on failure (job annotations; optional Slack webhook)
  - Phase 3: Frontend Web App — Status: Not Started — 2025-08-08T03:40:39Z

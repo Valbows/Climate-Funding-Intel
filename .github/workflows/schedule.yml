@@ -1,0 +1,58 @@
+name: Scheduled Pipeline Run
+
+on:
+  schedule:
+    - cron: '0 */2 * * *' # every 2 hours
+  workflow_dispatch:
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build pipeline image
+        run: docker build -t climate-funding-intel-pipeline -f pipeline/Dockerfile pipeline
+
+      - name: Check required secrets
+        id: check
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_TABLE: ${{ secrets.SUPABASE_TABLE }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          missing=()
+          for v in SUPABASE_URL SUPABASE_SERVICE_ROLE_KEY SUPABASE_TABLE GEMINI_API_KEY; do
+            if [ -z "${!v}" ]; then missing+=("$v"); fi
+          done
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "Missing required secrets: ${missing[*]}"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run pipeline container
+        if: steps.check.outputs.skip != 'true'
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_TABLE: ${{ secrets.SUPABASE_TABLE }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          MODEL: ${{ secrets.MODEL }}
+          LOG_LEVEL: INFO
+        run: |
+          docker run --rm \
+            -e SUPABASE_URL \
+            -e SUPABASE_SERVICE_ROLE_KEY \
+            -e SUPABASE_TABLE \
+            -e GEMINI_API_KEY \
+            -e MODEL \
+            -e LOG_LEVEL \
+            climate-funding-intel-pipeline
+
+      - name: Skip summary
+        if: steps.check.outputs.skip == 'true'
+        run: echo "Skipping run due to missing secrets. Configure repository secrets to enable."

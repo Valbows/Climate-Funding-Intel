@@ -123,3 +123,18 @@ Purpose: Centralized history of decisions, incidents, and fixes to prevent repea
 - Risk(s): None significant; insert uses service key envs only when configured.
 - Action Items: Add SQL migration for `pipeline_runs` and integration test for telemetry insert using sandbox envs.
 - References: `pipeline/telemetry.py`, `pipeline/main.py`, `pipeline/tests/unit/test_telemetry.py`, `.env.example`, `plan.md`.
+
+### 2025-08-08T08:24:52Z — Implement | DB Migration
+- Summary: Added SQL migration to create `public.pipeline_runs` telemetry table with RLS enabled.
+- Change(s): `supabase/sql/001_pipeline_runs.sql` with schema, comments, and RLS enablement.
+- Decision(s): No RLS policies yet; only service role writes. Add read policies later if needed for dashboards.
+- Action Items: Apply migration in Supabase SQL editor/CLI; verify telemetry inserts.
+- References: `supabase/sql/001_pipeline_runs.sql`, `plan.md`.
+
+### 2025-08-08T08:24:52Z — Implement | Scheduler
+- Summary: Added GitHub Actions scheduled workflow to run the pipeline container every 2 hours.
+- Change(s): `.github/workflows/schedule.yml` builds Docker image and runs container if required secrets are present.
+- Decision(s): Gate execution on secrets; allow manual `workflow_dispatch` for testing.
+- Risk(s): None if secrets are missing—job exits early with a clear message.
+- Action Items: Configure repository secrets (`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_TABLE`, `GEMINI_API_KEY`, optional `MODEL`).
+- References: `.github/workflows/schedule.yml`, `plan.md` Phase 2 checklist.
