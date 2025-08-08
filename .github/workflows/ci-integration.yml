@@ -1,0 +1,61 @@
+name: CI Integration (Telemetry)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  telemetry-integration:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check required secrets
+        id: check
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          TELEMETRY_TABLE_SANDBOX: ${{ secrets.TELEMETRY_TABLE_SANDBOX }}
+        run: |
+          missing=()
+          for v in SUPABASE_URL SUPABASE_SERVICE_ROLE_KEY TELEMETRY_TABLE_SANDBOX; do
+            if [ -z "${!v}" ]; then missing+=("$v"); fi
+          done
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "Missing required secrets: ${missing[*]}"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup Python
+        if: steps.check.outputs.skip != 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        if: steps.check.outputs.skip != 'true'
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r pipeline/requirements.txt
+
+      - name: Run telemetry integration test
+        if: steps.check.outputs.skip != 'true'
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          TELEMETRY_TABLE_SANDBOX: ${{ secrets.TELEMETRY_TABLE_SANDBOX }}
+        run: |
+          pytest -q pipeline/tests/integration/test_telemetry_insert.py
+
+      - name: Skip summary
+        if: steps.check.outputs.skip == 'true'
+        run: echo "Skipping telemetry integration tests due to missing secrets. Configure repository secrets to enable."

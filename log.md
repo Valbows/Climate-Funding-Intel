@@ -159,3 +159,18 @@ Purpose: Centralized history of decisions, incidents, and fixes to prevent repea
 - Outcome: Job should appear in `cron.job` once created in Supabase SQL Editor.
 - Action Items: Verify with `select jobid, jobname, schedule from cron.job order by jobid;`.
 - References: `supabase/sql/005_pipeline_runs_mview.sql`, `plan.md` Phase 2 checklist.
+ 
+### 2025-08-08T10:50:18Z — Implement | CI (Gated Integration)
+- Summary: Added GitHub Actions workflow to run telemetry integration test against Supabase sandbox, gated by required secrets.
+- Change(s): Created `.github/workflows/ci-integration.yml` with a `Check required secrets` step and conditional steps for setup/install/test. Uses secrets `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `TELEMETRY_TABLE_SANDBOX`.
+- Decision(s): Mirror gating pattern from `schedule.yml` to avoid job-level `secrets` usage in `if:`; provide a clear skip summary when secrets are missing.
+- Risk(s): None when secrets are missing—job exits early with message.
+- Action Items: Configure repository secrets for sandbox to enable integration path on PRs; monitor for deprecation warnings in Supabase client.
+- References: `.github/workflows/ci-integration.yml`, `.github/workflows/schedule.yml`, `plan.md` Phase 2 checklist.
+
+### 2025-08-08T10:05:53Z — Implement | Integration Test (Telemetry)
+- Summary: Telemetry integration test added to insert a synthetic run into sandbox telemetry table.
+- Change(s): `pipeline/tests/integration/test_telemetry_insert.py` uses `build_run_record` + `insert_run`, gated by envs.
+- Env Gating: Requires `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `TELEMETRY_TABLE_SANDBOX`; test auto-skips if missing.
+- Action Items: Ensure sandbox table exists and set `TELEMETRY_TABLE_SANDBOX` accordingly.
+- References: `pipeline/tests/integration/test_telemetry_insert.py`, `pipeline/telemetry.py`, `.env.example`.
