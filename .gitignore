@@ -1,0 +1,26 @@
+# General
+.DS_Store
+.env
+.env.local
+*.log
+__pycache__/
+*.pyc
+.venv/
+venv/
+.idea/
+.vscode/
+
+# Pipeline
+pipeline/.env
+pipeline/__pycache__/
+pipeline/last_result.txt
+pipeline/dropped_events.json
+
+# Node/Next.js
+node_modules/
+web/.next/
+web/.env.local
+
+# Tests
+.pytest_cache/
+coverage/

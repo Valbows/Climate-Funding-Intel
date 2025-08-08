@@ -1,0 +1,10 @@
+# Exclude secrets and build artifacts from Docker context
+.env
+.env.*
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+last_result.txt
+dropped_events.json
