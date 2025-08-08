@@ -459,7 +459,7 @@ Status: Completed — 2025-08-08T03:27:32Z
    - [x] Persist debug artifacts (`last_result.txt`, `dropped_events.json`) and logging
    - [x] Unit tests for extraction and sanitizer
    - [ ] Integration test: end-to-end Supabase upsert (sandbox table)
-   - [ ] Pydantic schema for funding events (stronger validation)
+   - [x] Pydantic schema for funding events (stronger validation)
    - [ ] Telemetry table `pipeline_runs` (counts, duration, errors)
  - Phase 2: Automation & Scheduling — Status: Partially Completed — 2025-08-08T03:40:39Z
    - [x] Dockerize pipeline (`pipeline/Dockerfile`, `.dockerignore`)

@@ -67,3 +67,15 @@ Purpose: Centralized history of decisions, incidents, and fixes to prevent repea
 - Mitigation & Fix: Sanitizer filtering/normalization; explicit prompt rules; persisted artifacts for offline debugging; improved JSON extraction and error logging.
 - Action Items: Review `pipeline/dropped_events.json` and `pipeline/last_result.txt`; consider Pydantic schema validation; add `pipeline_runs` table for telemetry; tighten fallback logic; integrate CI + scheduled runs with alerting.
 - References: `pipeline/main.py`, `pipeline/utils/event_sanitizer.py`, `pipeline/tasks/verification_task.py`, `.gitignore`, `pipeline/.dockerignore`, `plan.md` Sections 7, 9, 13.
+
+### 2025-08-08T03:58:29Z — Execute/Implement | Test
+- Summary: Added Pydantic `FundingEvent` model aligning with sanitizer rules; created unit tests for schema normalization and validation.
+- Change(s):
+  - Added `pipeline/models.py` with `FundingEvent` model, validators for `startup_name` and `https` `source_url`, amount parsing (digits-only), and `YYYY-MM-DD` date normalization with `to_db_dict()`.
+  - Added unit tests `pipeline/tests/unit/test_models.py` covering valid normalization, required field failures, invalid date, amount parsing, and native date handling.
+  - Updated `pipeline/requirements.txt` to include `pydantic`.
+- Decision(s): Use Pydantic v2 for strong runtime validation while keeping sanitizer for LLM outputs; models are the source of truth for DB shape.
+- Risk(s): Divergence between sanitizer and model rules.
+- Mitigation & Fix: Matched model validators to sanitizer behavior; added dedicated tests.
+- Action Items: Integrate model into `pipeline/main.py` or utilize post-sanitization validation; add telemetry model next.
+- References: `pipeline/models.py`, `pipeline/tests/unit/test_models.py`, `pipeline/utils/event_sanitizer.py`, `pipeline/requirements.txt`.
