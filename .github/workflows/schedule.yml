@@ -47,13 +47,13 @@ jobs:
           # Build conditional args for optional variables
           ARGS=( )
           if [ -n "${SUPABASE_TABLE}" ]; then ARGS+=( -e SUPABASE_TABLE ); fi
+          if [ -n "${MODEL}" ]; then ARGS+=( -e MODEL ); fi
 
           docker run --rm \
             -e SUPABASE_URL \
             -e SUPABASE_SERVICE_ROLE_KEY \
             -e GEMINI_API_KEY \
             -e TAVILY_API_KEY \
-            -e MODEL \
             -e LOG_LEVEL \
             "${ARGS[@]}" \
             climate-funding-intel-pipeline

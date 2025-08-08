@@ -86,8 +86,10 @@ def _parse_model_fallbacks() -> List[str]:
     - MODEL (primary, default: gemini-2.0-flash)
     - LLM_MODEL_FALLBACKS (comma-separated list, optional)
     """
-    primary = os.getenv("MODEL", "gemini-2.0-flash")
-    fallbacks = os.getenv("LLM_MODEL_FALLBACKS", "")
+    # Note: os.getenv returns "" if the var is present but empty; treat that as unset.
+    primary_env = os.getenv("MODEL")
+    primary = primary_env.strip() if primary_env and primary_env.strip() else "gemini-2.0-flash"
+    fallbacks_env = os.getenv("LLM_MODEL_FALLBACKS", "")
 
     def _unq(s: str) -> str:
         s2 = s.strip()
@@ -96,11 +98,14 @@ def _parse_model_fallbacks() -> List[str]:
         return s2
 
     models: List[str] = []
-    raw_list = [primary] + [p for p in fallbacks.split(",") if p.strip()]
+    raw_list = [primary] + [p for p in fallbacks_env.split(",") if p.strip()]
     for raw in raw_list:
         m = _unq(raw)
         if m and m not in models:
             models.append(m)
+    # Guarantee at least one model
+    if not models:
+        models = ["gemini-2.0-flash"]
     return models
 
 
@@ -270,6 +275,8 @@ def run_once_with_model(model_id: str) -> Dict[str, Any]:
 
 def run() -> Dict[str, Any]:
     models = _parse_model_fallbacks()
+    if not models:  # Extra guard (should not happen)
+        models = ["gemini-2.0-flash"]
     last_error: Exception | None = None
     for model_id in models:
         logging.info("Attempting pipeline with model: %s", model_id)
