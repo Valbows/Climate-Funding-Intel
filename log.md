@@ -93,3 +93,21 @@ Purpose: Centralized history of decisions, incidents, and fixes to prevent repea
 - Action Items: Implement sandbox Supabase integration test; add telemetry (`pipeline_runs`) with counts and durations; wire CI to run tests on PRs.
 - References: `pipeline/main.py`, `pipeline/Dockerfile`, `pipeline/models.py`, `pipeline/tests/unit/*`.
 
+### 2025-08-08T07:53:23Z — Test | Integration Scaffold
+- Summary: Added Supabase integration test scaffold that safely skips without sandbox envs; verified test suite stability.
+- Change(s):
+  - Created `pipeline/tests/integration/test_supabase_upsert.py` requiring `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `SUPABASE_TABLE_SANDBOX` to run.
+  - Updated `.env.example` to include `SUPABASE_TABLE_SANDBOX`.
+- Result(s): `pytest` green — 17 passed, 1 skipped (integration) in ~2.3s inside Docker.
+- Issue(s) & Root Cause: Docker pytest initially failed due to `ModuleNotFoundError: pipeline`; root cause was missing `PYTHONPATH` in container.
+- Mitigation & Fix: Set `PYTHONPATH=/app` in `pipeline/Dockerfile` (documented in prior entry); rebuilt image; reran tests successfully.
+- Action Items: Configure sandbox table and secrets to enable the integration path; proceed to telemetry and CI scheduling.
+- References: `pipeline/tests/integration/test_supabase_upsert.py`, `.env.example`, `pipeline/Dockerfile`.
+
+### 2025-08-08T07:55:23Z — Execute/Implement | CI
+- Summary: Added GitHub Actions workflow to run unit tests on push/PR for `main`.
+- Change(s): Created `.github/workflows/ci.yml` to install `pipeline/requirements.txt` and run `pytest` with `PYTHONPATH` set.
+- Decision(s): Keep CI lightweight (no Docker build) for speed; add scheduled job later for full pipeline container run.
+- Risk(s): API-dependent tests could require secrets; we avoided this by keeping integration test skipped unless envs are provided.
+- Action Items: Add scheduled workflow for container run; wire Slack/GitHub notifications on failures.
+- References: `.github/workflows/ci.yml`, `plan.md` Phase 2 checklist.

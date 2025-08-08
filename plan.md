@@ -451,7 +451,7 @@ Status: Completed — 2025-08-08T03:27:32Z
 ## 18) Phase Plan (You provided — enhanced, not removed)
 
  - Phase 0: System Architecture & Setup (this document). Create Supabase table + policies; prepare env/secrets. — Status: Completed — 2025-08-08T03:40:39Z
- - Phase 1: Backend Pipeline — Status: In Progress — 2025-08-08T03:40:39Z
+ - Phase 1: Backend Pipeline — Status: In Progress — 2025-08-08T03:53:23-04:00
    - [x] Implement agents, tasks, tools
    - [x] LLM client (Gemini) with fallbacks, retries, timeouts
    - [x] Event sanitizer and strict prompt alignment
@@ -459,14 +459,17 @@ Status: Completed — 2025-08-08T03:27:32Z
    - [x] Persist debug artifacts (`last_result.txt`, `dropped_events.json`) and logging
    - [x] Unit tests for extraction and sanitizer
    - [ ] Integration test: end-to-end Supabase upsert (sandbox table)
+     - Scaffold added; test skips unless Supabase env and sandbox table are configured
    - [x] Pydantic schema for funding events (stronger validation)
+   - [x] Integrate Pydantic validation gate in `pipeline/main.py` (post-sanitization)
    - [ ] Telemetry table `pipeline_runs` (counts, duration, errors)
  - Phase 2: Automation & Scheduling — Status: Partially Completed — 2025-08-08T03:40:39Z
-   - [x] Dockerize pipeline (`pipeline/Dockerfile`, `.dockerignore`)
-   - [ ] Vercel Cron (primary) configured to trigger API route
-   - [ ] GitHub Actions schedule (interim/alt) to run pipeline container
-   - [ ] Secrets configured in GitHub/Vercel project settings
-   - [ ] Alerts on failure (job annotations; optional Slack webhook)
+    - [x] Dockerize pipeline (`pipeline/Dockerfile`, `.dockerignore`)
+    - [x] CI: GitHub Actions workflow to run unit tests on push/PR
+    - [ ] Vercel Cron (primary) configured to trigger API route
+    - [ ] GitHub Actions schedule (interim/alt) to run pipeline container
+    - [ ] Secrets configured in GitHub/Vercel project settings
+    - [ ] Alerts on failure (job annotations; optional Slack webhook)
  - Phase 3: Frontend Web App — Status: Not Started — 2025-08-08T03:40:39Z
    - Next.js app, API route for events; UI components (Header, Filters, DataTable); SWR refresh; unit + E2E tests.
  - Phase 4: Deployment & Documentation — Status: Not Started — 2025-08-08T03:40:39Z
