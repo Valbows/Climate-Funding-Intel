@@ -452,13 +452,25 @@ Status: Completed — 2025-08-08T03:27:32Z
 
  - Phase 0: System Architecture & Setup (this document). Create Supabase table + policies; prepare env/secrets. — Status: Completed — 2025-08-08T03:40:39Z
  - Phase 1: Backend Pipeline — Status: In Progress — 2025-08-08T03:40:39Z
-  - Implement agents, tasks, tools; LLM client; Supabase upsert; error handling + retries; unit/integration tests.
+   - [x] Implement agents, tasks, tools
+   - [x] LLM client (Gemini) with fallbacks, retries, timeouts
+   - [x] Event sanitizer and strict prompt alignment
+   - [x] Supabase upsert with schema adherence and dedupe by `source_url`
+   - [x] Persist debug artifacts (`last_result.txt`, `dropped_events.json`) and logging
+   - [x] Unit tests for extraction and sanitizer
+   - [ ] Integration test: end-to-end Supabase upsert (sandbox table)
+   - [ ] Pydantic schema for funding events (stronger validation)
+   - [ ] Telemetry table `pipeline_runs` (counts, duration, errors)
  - Phase 2: Automation & Scheduling — Status: Partially Completed — 2025-08-08T03:40:39Z
-  - Dockerize pipeline; schedule via GH Actions; secrets in repo settings.
+   - [x] Dockerize pipeline (`pipeline/Dockerfile`, `.dockerignore`)
+   - [ ] Vercel Cron (primary) configured to trigger API route
+   - [ ] GitHub Actions schedule (interim/alt) to run pipeline container
+   - [ ] Secrets configured in GitHub/Vercel project settings
+   - [ ] Alerts on failure (job annotations; optional Slack webhook)
  - Phase 3: Frontend Web App — Status: Not Started — 2025-08-08T03:40:39Z
-  - Next.js app, API route for events; UI components (Header, Filters, DataTable); SWR refresh; unit + E2E tests.
+   - Next.js app, API route for events; UI components (Header, Filters, DataTable); SWR refresh; unit + E2E tests.
  - Phase 4: Deployment & Documentation — Status: Not Started — 2025-08-08T03:40:39Z
-  - Vercel deploy; enable scheduler; README with architecture diagram and setup instructions.
+   - Vercel deploy; enable scheduler; README with architecture diagram and setup instructions.
 
 
 ## 19) Acceptance Criteria (per phase)
