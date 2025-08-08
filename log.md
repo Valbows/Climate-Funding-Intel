@@ -152,3 +152,10 @@ Purpose: Centralized history of decisions, incidents, and fixes to prevent repea
 - Decision(s): Scheduling not added yet; can be executed manually or via scheduled job later.
 - Action Items: Apply migration in Supabase SQL editor; optionally set up a scheduled call (e.g., pg_cron) to run daily.
 - References: `supabase/sql/004_pipeline_runs_retention.sql`.
+
+### 2025-08-08T09:55:26Z — Implement | Scheduler (pg_cron)
+- Summary: Scheduled nightly refresh for telemetry materialized view `public.pipeline_runs_daily`.
+- Change(s): Created pg_cron job `refresh_pipeline_runs_daily` at 03:30 UTC to run `select public.refresh_pipeline_runs_daily();`.
+- Outcome: Job should appear in `cron.job` once created in Supabase SQL Editor.
+- Action Items: Verify with `select jobid, jobname, schedule from cron.job order by jobid;`.
+- References: `supabase/sql/005_pipeline_runs_mview.sql`, `plan.md` Phase 2 checklist.

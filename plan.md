@@ -468,14 +468,15 @@ Status: Completed — 2025-08-08T03:27:32Z
    - [x] Apply migrations in Supabase
    - [x] Index migration for telemetry table (see `supabase/sql/003_pipeline_runs_indexes.sql`)
    - [ ] Add integration tests for telemetry insert
- - Phase 2: Automation & Scheduling — Status: Partially Completed — 2025-08-08T03:40:39Z
-    - [x] Dockerize pipeline (`pipeline/Dockerfile`, `.dockerignore`)
-    - [x] CI: GitHub Actions workflow to run unit tests on push/PR
-    - [x] Vercel Cron (primary) configured to trigger API route
-    - [x] GitHub Actions schedule (interim/alt) to run pipeline container
-    - [ ] Secrets configured in GitHub/Vercel project settings
-    - [ ] Alerts on failure (job annotations; optional Slack webhook)
-    - Notes: Added verification scripts `pipeline/scripts/insert_test_telemetry.py` and `pipeline/scripts/check_telemetry.py` to validate telemetry.
+  - Phase 2: Automation & Scheduling — Status: Partially Completed — 2025-08-08T03:40:39Z
+     - [x] Dockerize pipeline (`pipeline/Dockerfile`, `.dockerignore`)
+     - [x] CI: GitHub Actions workflow to run unit tests on push/PR
+     - [x] Vercel Cron (primary) configured to trigger API route
+     - [x] GitHub Actions schedule (interim/alt) to run pipeline container
+     - [ ] Secrets configured in GitHub/Vercel project settings
+     - [ ] Alerts on failure (job annotations; optional Slack webhook)
+     - Notes: Added verification scripts `pipeline/scripts/insert_test_telemetry.py` and `pipeline/scripts/check_telemetry.py` to validate telemetry.
+     - [x] pg_cron: schedule nightly refresh of `public.pipeline_runs_daily` at 03:30 UTC (`refresh_pipeline_runs_daily`)
  - Phase 3: Frontend Web App — Status: Not Started — 2025-08-08T03:40:39Z
    - Next.js app, API route for events; UI components (Header, Filters, DataTable); SWR refresh; unit + E2E tests.
  - Phase 4: Deployment & Documentation — Status: Not Started — 2025-08-08T03:40:39Z
