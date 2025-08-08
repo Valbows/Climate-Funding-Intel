@@ -3,7 +3,9 @@
 
 alter table public.pipeline_runs enable row level security; -- in case not enabled
 
-create policy if not exists "Allow authenticated read"
+drop policy if exists "Allow authenticated read" on public.pipeline_runs;
+
+create policy "Allow authenticated read"
   on public.pipeline_runs
   for select
   to authenticated
