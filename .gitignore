@@ -20,6 +20,11 @@ pipeline/dropped_events.json
 node_modules/
 web/.next/
 web/.env.local
+web/.vercel/
+web/.turbo/
+web/out/
+web/.eslintcache
+web/npm-debug.log*
 
 # Tests
 .pytest_cache/
