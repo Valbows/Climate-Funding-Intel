@@ -174,3 +174,23 @@ Purpose: Centralized history of decisions, incidents, and fixes to prevent repea
 - Env Gating: Requires `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `TELEMETRY_TABLE_SANDBOX`; test auto-skips if missing.
 - Action Items: Ensure sandbox table exists and set `TELEMETRY_TABLE_SANDBOX` accordingly.
 - References: `pipeline/tests/integration/test_telemetry_insert.py`, `pipeline/telemetry.py`, `.env.example`.
+
+### 2025-08-08T12:33:40Z — Test | Operate
+- Summary: Telemetry integration finalized; CI fixed with PYTHONPATH; pg_cron jobs verified; mview refresh populated.
+- Change(s):
+  - Updated `.github/workflows/ci-integration.yml` to set `PYTHONPATH` for pytest collection.
+  - Applied Supabase SQL: telemetry schema, policies, indexes, retention function, mview; scheduled pg_cron jobs.
+  - Removed duplicate prune job if present (kept `prune_pipeline_runs_90d` at 04:00 UTC).
+- Outcome:
+  - CI Integration (Telemetry) workflow passed on `main`.
+  - `cron.job` shows `refresh_pipeline_runs_daily` (30 3 * * *) and `prune_pipeline_runs_90d` (0 4 * * *).
+  - Manual refresh returned count=1 from `public.pipeline_runs_daily`.
+  - Manual retention prune returned 0 (no rows older than 90 days).
+- Issue(s) & Root Cause:
+  - Initial CI failure: `ModuleNotFoundError: No module named 'pipeline'` due to missing `PYTHONPATH` on GitHub runner.
+- Mitigation & Fix:
+  - Set `PYTHONPATH: ${{ github.workspace }}` in integration test step; consider adding `pipeline/__init__.py` to avoid env reliance.
+- Action Items:
+  - Optional: add alerts on failure (Slack webhook or GH annotations).
+  - Proceed to Phase 3: Frontend scaffold (Next.js app, API route, UI components, tests).
+- References: `.github/workflows/ci-integration.yml`, `supabase/sql/001_pipeline_runs.sql`, `002_pipeline_runs_policies.sql`, `003_pipeline_runs_indexes.sql`, `004_pipeline_runs_retention.sql`, `005_pipeline_runs_mview.sql`, `pipeline/tests/integration/test_telemetry_insert.py`, `plan.md`.

@@ -472,12 +472,14 @@ Status: Completed — 2025-08-08T03:27:32Z
      - [x] Dockerize pipeline (`pipeline/Dockerfile`, `.dockerignore`)
      - [x] CI: GitHub Actions workflow to run unit tests on push/PR
      - [x] CI: Gated telemetry integration workflow (`.github/workflows/ci-integration.yml`)
-     - [x] Vercel Cron (primary) configured to trigger API route
-     - [x] GitHub Actions schedule (interim/alt) to run pipeline container
-     - [x] Secrets configured in GitHub/Vercel project settings
-     - [ ] Alerts on failure (job annotations; optional Slack webhook)
-     - Notes: Added verification scripts `pipeline/scripts/insert_test_telemetry.py` and `pipeline/scripts/check_telemetry.py` to validate telemetry.
-     - [x] pg_cron: schedule nightly refresh of `public.pipeline_runs_daily` at 03:30 UTC (`refresh_pipeline_runs_daily`)
+      - [x] Vercel Cron (primary) configured to trigger API route
+      - [x] GitHub Actions schedule (interim/alt) to run pipeline container
+      - [x] Secrets configured in GitHub/Vercel project settings
+      - [ ] Alerts on failure (job annotations; optional Slack webhook)
+      - Notes: Added verification scripts `pipeline/scripts/insert_test_telemetry.py` and `pipeline/scripts/check_telemetry.py` to validate telemetry.
+      - [x] pg_cron: schedule nightly refresh of `public.pipeline_runs_daily` at 03:30 UTC (`refresh_pipeline_runs_daily`)
+      - [x] pg_cron: daily retention prune at 04:00 UTC (`prune_pipeline_runs_90d`)
+      - [x] CI Integration (Telemetry) passing on `main`
  - Phase 3: Frontend Web App — Status: Not Started — 2025-08-08T03:40:39Z
    - Next.js app, API route for events; UI components (Header, Filters, DataTable); SWR refresh; unit + E2E tests.
  - Phase 4: Deployment & Documentation — Status: Not Started — 2025-08-08T03:40:39Z
