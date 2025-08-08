@@ -462,7 +462,8 @@ Status: Completed — 2025-08-08T03:27:32Z
      - Scaffold added; test skips unless Supabase env and sandbox table are configured
    - [x] Pydantic schema for funding events (stronger validation)
    - [x] Integrate Pydantic validation gate in `pipeline/main.py` (post-sanitization)
-   - [ ] Telemetry table `pipeline_runs` (counts, duration, errors)
+   - [x] Telemetry integration (client-side): record counts, duration, status; insert into `TELEMETRY_TABLE` (default `pipeline_runs`)
+   - [ ] Create Supabase table `pipeline_runs` + policies (SQL migration) and add integration tests
  - Phase 2: Automation & Scheduling — Status: Partially Completed — 2025-08-08T03:40:39Z
     - [x] Dockerize pipeline (`pipeline/Dockerfile`, `.dockerignore`)
     - [x] CI: GitHub Actions workflow to run unit tests on push/PR

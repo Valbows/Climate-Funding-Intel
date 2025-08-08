@@ -111,3 +111,15 @@ Purpose: Centralized history of decisions, incidents, and fixes to prevent repea
 - Risk(s): API-dependent tests could require secrets; we avoided this by keeping integration test skipped unless envs are provided.
 - Action Items: Add scheduled workflow for container run; wire Slack/GitHub notifications on failures.
 - References: `.github/workflows/ci.yml`, `plan.md` Phase 2 checklist.
+
+### 2025-08-08T08:08:03Z — Implement | Telemetry
+- Summary: Added lightweight telemetry to capture pipeline run metrics (counts, duration, status) into Supabase table `pipeline_runs`.
+- Change(s):
+  - Created `pipeline/telemetry.py` with `build_run_record()` and `insert_run()`.
+  - Wired telemetry in `pipeline/main.py` to record success and error cases per model attempt.
+  - Added unit tests `pipeline/tests/unit/test_telemetry.py` covering record shaping and graceful insert behavior.
+  - Updated `.env.example` with `TELEMETRY_TABLE` default.
+- Decision(s): Telemetry insertion is best-effort; failures are logged and never break pipeline execution.
+- Risk(s): None significant; insert uses service key envs only when configured.
+- Action Items: Add SQL migration for `pipeline_runs` and integration test for telemetry insert using sandbox envs.
+- References: `pipeline/telemetry.py`, `pipeline/main.py`, `pipeline/tests/unit/test_telemetry.py`, `.env.example`, `plan.md`.
