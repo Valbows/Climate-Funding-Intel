@@ -91,29 +91,31 @@ export function FundingEventsList(props: FundingEventsListProps) {
         </ul>
       )}
 
-      {isEnabled && !isLoading && !isError && count > limit && (
+      {isEnabled && !isLoading && !isError && (count || 0) >= 1 && (
         <div className="flex items-center justify-between mt-3" data-testid="fe-pagination">
           <div className="text-xs text-[color:var(--fg-muted)]">Page {currentPage} of {totalPages}</div>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              aria-label="Previous"
-              className="px-2 py-1 text-xs border rounded disabled:opacity-50"
-              disabled={!canPrev}
-              onClick={() => canPrev && setCurrentPage((p) => Math.max(1, p - 1))}
-            >
-              Prev
-            </button>
-            <button
-              type="button"
-              aria-label="Next"
-              className="px-2 py-1 text-xs border rounded disabled:opacity-50"
-              disabled={!canNext}
-              onClick={() => canNext && setCurrentPage((p) => Math.min(totalPages, p + 1))}
-            >
-              Next
-            </button>
-          </div>
+          {totalPages > 1 && (
+            <div className="flex gap-2">
+              <button
+                type="button"
+                aria-label="Previous"
+                className="px-2 py-1 text-xs border rounded disabled:opacity-50"
+                disabled={!canPrev}
+                onClick={() => canPrev && setCurrentPage((p) => Math.max(1, p - 1))}
+              >
+                Prev
+              </button>
+              <button
+                type="button"
+                aria-label="Next"
+                className="px-2 py-1 text-xs border rounded disabled:opacity-50"
+                disabled={!canNext}
+                onClick={() => canNext && setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              >
+                Next
+              </button>
+            </div>
+          )}
         </div>
       )}
     </section>
