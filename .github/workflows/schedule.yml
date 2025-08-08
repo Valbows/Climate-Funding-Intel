@@ -55,8 +55,19 @@ jobs:
             -e GEMINI_API_KEY \
             -e TAVILY_API_KEY \
             -e LOG_LEVEL \
+            -v "$GITHUB_WORKSPACE/pipeline:/app/pipeline" \
             "${ARGS[@]}" \
             climate-funding-intel-pipeline
+
+      - name: Upload pipeline artifacts
+        if: steps.check.outputs.skip != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: pipeline-debug
+          path: |
+            pipeline/last_result.txt
+            pipeline/dropped_events.json
+          if-no-files-found: ignore
 
       - name: Skip summary
         if: steps.check.outputs.skip == 'true'
