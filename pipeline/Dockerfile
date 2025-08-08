@@ -20,7 +20,8 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 COPY . /app/pipeline
 
 # Default envs (override at runtime)
-ENV LOG_LEVEL=INFO
+ENV LOG_LEVEL=INFO \
+    PYTHONPATH=/app
 
 # Entrypoint
 # Provide env via docker run --env-file pipeline/.env

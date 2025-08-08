@@ -79,3 +79,17 @@ Purpose: Centralized history of decisions, incidents, and fixes to prevent repea
 - Mitigation & Fix: Matched model validators to sanitizer behavior; added dedicated tests.
 - Action Items: Integrate model into `pipeline/main.py` or utilize post-sanitization validation; add telemetry model next.
 - References: `pipeline/models.py`, `pipeline/tests/unit/test_models.py`, `pipeline/utils/event_sanitizer.py`, `pipeline/requirements.txt`.
+
+### 2025-08-08T07:45:24Z — Execute/Implement | Integrate & Test
+- Summary: Integrated Pydantic `FundingEvent` validation into `pipeline/main.py` post-sanitization; combined sanitizer and validation drops for persistence; fixed Docker import path for tests; all unit tests passing in Docker.
+- Change(s):
+  - Updated `pipeline/main.py` to validate sanitized events with `FundingEvent`, convert with `to_db_dict()`, and upsert only validated records. Persist combined drops to `pipeline/dropped_events.json` with Pydantic errors.
+  - Updated `pipeline/Dockerfile` to set `PYTHONPATH=/app` so `import pipeline` resolves during pytest collection.
+  - Rebuilt Docker image and executed tests inside container.
+- Result(s): `pytest` green — 17 passed in ~4s.
+- Decision(s): Enforce Pydantic as the final gate before DB writes; persist reasons for all dropped events for offline triage.
+- Risk(s): Potential mismatch if sanitizer rules evolve without updating model validators.
+- Mitigation & Fix: Keep sanitizer and model in lockstep; add integration tests next for Supabase upsert path.
+- Action Items: Implement sandbox Supabase integration test; add telemetry (`pipeline_runs`) with counts and durations; wire CI to run tests on PRs.
+- References: `pipeline/main.py`, `pipeline/Dockerfile`, `pipeline/models.py`, `pipeline/tests/unit/*`.
+
