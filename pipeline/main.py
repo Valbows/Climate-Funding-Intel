@@ -121,7 +121,12 @@ def kickoff_with_retry(crew) -> str:
 
     for attempt in range(max_retries + 1):
         try:
-            return crew.kickoff()
+            res = crew.kickoff()
+            # Guard: sometimes the LLM wrapper may return None or an empty/"None" string without raising.
+            res_text = "" if res is None else str(res)
+            if res is None or not res_text.strip() or res_text.strip().lower() == "none":
+                raise RuntimeError("Invalid response from LLM call - None or empty")
+            return res
         except Exception as e:  # noqa: BLE001
             logging.warning(
                 "kickoff failed (attempt %d/%d): %s",
@@ -246,6 +251,17 @@ def run_once_with_model(model_id: str) -> Dict[str, Any]:
             logging.debug("Wrote dropped events to %s", drop_path)
         except Exception as persist_err:  # pragma: no cover
             logging.debug("Failed to persist dropped events: %s", persist_err)
+        # Emit an info-level summary of drop reasons for quick diagnosis in logs
+        try:
+            reason_counts: Dict[str, int] = {}
+            for d in combined_dropped:
+                r = d.get("__reason", "unknown")
+                reason_counts[r] = reason_counts.get(r, 0) + 1
+            if reason_counts:
+                summary = ", ".join(f"{k}={v}" for k, v in reason_counts.items())
+                logging.info("Drop reasons summary: %s", summary)
+        except Exception as _e:  # pragma: no cover
+            logging.debug("Failed to summarize drop reasons: %s", _e)
 
     if validated_events:
         upsert_resp = upsert_funding_events(validated_events)
