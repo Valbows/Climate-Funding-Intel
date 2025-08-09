@@ -33,7 +33,7 @@ export async function GET(_req: NextRequest, ctx: { params: { slug: string } }) 
         lastRoundDate: null,
         sources: [],
         error: error.message,
-      }, { status: 200 })
+      }, { status: 200, headers: { 'Cache-Control': 'no-store' } })
     }
 
     events = data || []
@@ -61,7 +61,7 @@ export async function GET(_req: NextRequest, ctx: { params: { slug: string } }) 
       lastRoundDate: null,
       sources: [],
       error: e?.message || 'Supabase not configured',
-    }, { status: 200 })
+    }, { status: 200, headers: { 'Cache-Control': 'no-store' } })
   }
 
   const totalRaised = events.reduce((sum, e) => sum + formatAmount(e.amount_raised_usd ?? e.amount_usd ?? null), 0)
@@ -69,6 +69,10 @@ export async function GET(_req: NextRequest, ctx: { params: { slug: string } }) 
   const lastRound = last?.funding_round ?? null
   const lastRoundDate = last?.funding_date ?? null
   const sources = Array.from(new Set(events.map((e) => e.source_url).filter(Boolean)))
+
+  const cacheControl = bioStatus === 'pending'
+    ? 'no-store'
+    : 'public, max-age=30, stale-while-revalidate=120'
 
   return NextResponse.json({
     company: { name: events[0]?.startup_name || name, slug, bio: companyBio, bio_status: bioStatus },
@@ -78,7 +82,7 @@ export async function GET(_req: NextRequest, ctx: { params: { slug: string } }) 
     lastRoundDate,
     sources,
     error: null,
-  }, { status: 200 })
+  }, { status: 200, headers: { 'Cache-Control': cacheControl } })
 }
 
 // Stub endpoint for queueing enrichment. In this MVP it returns 202 without side effects.
