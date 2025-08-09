@@ -10,6 +10,7 @@
   --fg-muted: #e8e8e8;
   --success: #05C702;
   --warning: #FE6B2C;
+  --accent: #22C55E;
 }
 
 html, body, #__next {

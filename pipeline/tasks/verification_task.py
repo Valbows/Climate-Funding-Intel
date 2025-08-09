@@ -18,6 +18,8 @@ def create_verification_task(agent: Any, research_task: Any):
             "- If any fields remain unknown after scraping, you MAY use the web search tool to cross-check and fill missing details from credible sources.\n"
             "- Do NOT hallucinate values. Prefer leaving a field null to making up data.\n\n"
             "INCLUSION RULES (VERY IMPORTANT):\n"
+            "- ONLY include climate-tech funding events specifically in the Energy/Grid domain (e.g., energy storage, batteries, EV charging, grid modernization, renewables, transmission, smart metering, hydrogen, CCUS).\n"
+            "- EXCLUDE non-climate sectors such as fintech, stock trading/brokerage, payments, crypto, and neobanks (e.g., Robinhood, Coinbase).\n"
             "- Only include an event if BOTH conditions are met: (1) startup_name is present and non-empty, and (2) source_url is a valid https URL to the article.\n"
             "- If startup_name is missing/empty OR source_url is missing/invalid, OMIT that event entirely (do not output partial records).\n"
             "- Normalization: amount_raised_usd must be an integer number of USD (extract digits; no symbols), or null. funding_date must be YYYY-MM-DD or null. Trim whitespace from strings.\n\n"

@@ -41,7 +41,6 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
-          MODEL: ${{ secrets.MODEL }}
           # LLM controls (fallbacks and retries)
           LLM_MODEL_FALLBACKS: gemini-1.5-flash
           LLM_MAX_RETRIES: "4"
@@ -53,20 +52,23 @@ jobs:
           echo "LLM_MODEL_FALLBACKS=${LLM_MODEL_FALLBACKS}"
           echo "LLM_MAX_RETRIES=${LLM_MAX_RETRIES} LLM_RETRY_BASE_DELAY=${LLM_RETRY_BASE_DELAY} LLM_TIMEOUT=${LLM_TIMEOUT}"
 
-          docker run --rm \
+          set -euo pipefail
+          # Build docker args and only pass SUPABASE_TABLE if set
+          docker_args=(--rm \
             -e SUPABASE_URL \
             -e SUPABASE_SERVICE_ROLE_KEY \
             -e GEMINI_API_KEY \
             -e TAVILY_API_KEY \
-            -e SUPABASE_TABLE \
-            -e MODEL \
             -e LLM_MODEL_FALLBACKS \
             -e LLM_MAX_RETRIES \
             -e LLM_RETRY_BASE_DELAY \
             -e LLM_TIMEOUT \
             -e LOG_LEVEL \
-            -v "$GITHUB_WORKSPACE/pipeline:/app/pipeline" \
-            climate-funding-intel-pipeline
+            -v "$GITHUB_WORKSPACE/pipeline:/app/pipeline")
+          if [ -n "${SUPABASE_TABLE:-}" ]; then
+            docker_args+=( -e SUPABASE_TABLE )
+          fi
+          docker run "${docker_args[@]}" climate-funding-intel-pipeline
 
       - name: Upload pipeline artifacts
         if: steps.check.outputs.skip != 'true'

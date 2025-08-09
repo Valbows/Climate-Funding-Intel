@@ -13,6 +13,57 @@ STR_FIELDS = [
     "source_url",
 ]
 
+# Simple heuristics to keep only climate-tech Energy/Grid related entries
+# and drop obvious non-climate sectors (e.g., fintech, crypto, brokerage).
+CLIMATE_POSITIVE = [
+    "energy",
+    "grid",
+    "storage",
+    "battery",
+    "ev",
+    "charging",
+    "renewable",
+    "solar",
+    "wind",
+    "geothermal",
+    "transmission",
+    "smart",
+    "meter",
+    "microgrid",
+    "hydrogen",
+    "carbon",
+    "ccus",
+    "cleantech",
+    "climate",
+    "heat pump",
+    "hvac",
+    "inverter",
+    "photovoltaic",
+    "biomass",
+    "biofuel",
+    "demand response",
+]
+
+CLIMATE_NEGATIVE = [
+    "fintech",
+    "trading",
+    "brokerage",
+    "crypto",
+    "bitcoin",
+    "wallet",
+    "payment",
+    "payments",
+    "bank",
+    "banking",
+    "neobank",
+]
+
+# Known non-climate company names often returned by generic crawls
+CLIMATE_NEGATIVE_NAMES = [
+    "robinhood",
+    "coinbase",
+]
+
 
 def _to_str(v: Any) -> str | None:
     if v is None:
@@ -38,6 +89,32 @@ def _parse_amount_usd(v: Any) -> int | None:
         return int(digits)
     except Exception:
         return None
+
+
+def _is_climate_relevant(e: Dict[str, Any]) -> bool:
+    """Best-effort keyword-based filter for climate-tech relevance.
+
+    Checks `sub_sector` first, then falls back to `startup_name` if needed.
+    Any negative keyword present -> reject. Otherwise require at least one
+    positive keyword.
+    """
+    sub = e.get("sub_sector")
+    name = e.get("startup_name")
+    sub_l = str(sub).lower().strip() if isinstance(sub, str) else ""
+    name_l = str(name).lower().strip() if isinstance(name, str) else ""
+
+    # Block obvious non-climate
+    if any(neg in (sub_l + " " + name_l) for neg in CLIMATE_NEGATIVE):
+        return False
+    if any(bad in name_l for bad in CLIMATE_NEGATIVE_NAMES):
+        return False
+
+    # If sub_sector provided, require a positive signal in sub_sector
+    if sub_l:
+        return any(pos in sub_l for pos in CLIMATE_POSITIVE)
+
+    # If no sub_sector info, be permissive (allow) unless explicitly negative
+    return True
 
 
 def _normalize_date(v: Any) -> str | None:
@@ -82,6 +159,11 @@ def sanitize_events(events: List[Dict[str, Any]]) -> Tuple[List[Dict[str, Any]],
         src = norm.get("source_url")
         if not src or not str(src).lower().startswith("https"):
             dropped.append({**e, "__reason": "invalid_source_url"})
+            continue
+
+        # climate-tech relevance filter
+        if not _is_climate_relevant(norm):
+            dropped.append({**e, "__reason": "non_climate"})
             continue
 
         valid.append(norm)

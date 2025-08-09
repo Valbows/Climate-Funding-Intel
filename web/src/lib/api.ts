@@ -43,10 +43,10 @@ const FALLBACK: DashboardData = {
 
 export async function getDashboardData(): Promise<DashboardData> {
   const base = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.API_BASE_URL
-  if (!base) return FALLBACK
+  const url = base ? `${base}/dashboard` : `/api/dashboard`
 
   try {
-    const res = await fetch(`${base}/dashboard`, { next: { revalidate: 60 } })
+    const res = await fetch(url, { next: { revalidate: 60 } })
     if (!res.ok) return FALLBACK
     const data = (await res.json()) as Partial<DashboardData>
     return {

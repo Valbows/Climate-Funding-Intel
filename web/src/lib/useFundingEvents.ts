@@ -6,6 +6,7 @@ export type FundingEvent = {
   sub_sector?: string
   geography?: string
   funding_date?: string
+  source_url?: string
   // Primary DB field name
   amount_raised_usd?: number | null
   // Deprecated alias used by older UI code (kept for compatibility)
