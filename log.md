@@ -229,3 +229,19 @@ Purpose: Centralized history of decisions, incidents, and fixes to prevent repea
   - Expand E2E: dashboard → company navigation, verify external source links and metrics.
   - Consider adding Playwright to CI gated job.
 - References: `pipeline/telemetry.py`, `pipeline/main.py`, `pipeline/tests/unit/test_telemetry.py`, `.env.example`, `plan.md`.
+
+### 2025-08-09T22:39:32Z — Execute/Implement | Pipeline
+- Summary: Scaffolded the P3.4 Company Enrichment worker and runner to enable asynchronous bio enrichment.
+- Change(s):
+  - Added `pipeline/agents/enricher.py` (CrewAI agent using Tavily + ScrapeWebsite).
+  - Added `pipeline/enrich_company.py` (runner: builds LLM, executes task, sanitizes bio, upserts into Supabase `companies`).
+  - Added `pipeline/README.md` with usage and environment notes.
+  - Updated `plan.md` P3.4 to mark as started and describe config/fields written.
+- Outcome:
+  - Local runner can be invoked with `python -m pipeline.enrich_company --slug example-co` (requires `pipeline/.env`).
+  - Upsert writes `slug`, optional `website`, optional `bio`, optional `sources[]`, and timestamps `last_enriched_at`, `updated_at`.
+- Next Steps:
+  - Wire Next.js POST `/api/companies/[slug]/enrich` to queue/invoke this runner (via job queue or background process).
+  - Add structured tests for `sanitize_bio` and a mocked integration test for Supabase upsert path.
+  - Introduce admin gating for the Fetch Bio button once auth is integrated.
+- References: `pipeline/agents/enricher.py`, `pipeline/enrich_company.py`, `pipeline/README.md`, `plan.md`.

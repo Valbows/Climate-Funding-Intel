@@ -512,11 +512,14 @@ Status: Completed — 2025-08-08T03:27:32Z
        - `id UUID PK DEFAULT gen_random_uuid()`, `slug TEXT UNIQUE`, `name TEXT NOT NULL`, `website TEXT`, `bio TEXT`, `logo_url TEXT`, `hq_city TEXT`, `hq_country TEXT`, `founded_year INT`, `sectors TEXT[]`, `sources JSONB[]`, `last_enriched_at TIMESTAMPTZ`, `created_at TIMESTAMPTZ DEFAULT now()`, `updated_at TIMESTAMPTZ DEFAULT now()`.
      - RLS: allow anon `SELECT`; restrict `INSERT/UPDATE` to service role.
      - Optional view: `company_with_funding_summary` computing `total_raised`, `last_round`, `last_round_date` from `funding_events`.
-   - P3.4 Enrichment Worker (optional now, add next)
-     - New CrewAI agent `Company Enricher` (`pipeline/agents/enricher.py`) with tasks:
-       - Resolve official website (Tavily), scrape About/Overview pages (ScrapeWebsiteTool), and extract bio + metadata.
-       - Guardrails: exclude non-climate domains; respect robots; timeouts; JSON schema with nulls over guesses.
-     - Runner: invoked by a small Python entry (`pipeline/enrich_company.py --slug <slug>`) or queued by a background worker; writes to `companies` via service key.
+   - P3.4 Enrichment Worker
+      - [~] New CrewAI agent `Company Enricher` (`pipeline/agents/enricher.py`).
+        - Resolve official website (Tavily), scrape About/Overview pages (ScrapeWebsiteTool), and extract bio + metadata.
+        - Guardrails: exclude non-climate domains; respect robots; timeouts; JSON schema with nulls over guesses.
+      - [~] Runner (`pipeline/enrich_company.py --slug <slug>`):
+        - Builds LLM, runs single enrichment task, sanitizes bio, and upserts into Supabase `companies` (fields: slug, website, bio, sources[], last_enriched_at, updated_at).
+        - Config: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `GEMINI_API_KEY`, optional `SUPABASE_COMPANIES_TABLE` (default `companies`).
+      - [x] Developer docs: `pipeline/README.md` with usage and env notes.
    - P3.5 Frontend/Backend wiring
      - [~] API `POST /api/companies/[slug]/enrich` (server-only): added stub endpoint returning 202 with simple in-memory rate limit and optional `x-admin-token` header. Queuing to be implemented.
      - [~] Client wiring: `CompanyBio` now POSTs to `/api/companies/[slug]/enrich`; button present (admin gating pending until auth is added).
