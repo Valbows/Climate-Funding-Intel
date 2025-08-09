@@ -26,7 +26,7 @@ export function CompanyBio({ slug }: { slug: string }) {
 
   async function requestEnrichment() {
     try {
-      await fetch(`/api/companies/${slug}`, { method: 'POST' })
+      await fetch(`/api/companies/${slug}/enrich`, { method: 'POST' })
       // Optimistically set to pending and trigger revalidation
       await mutate()
     } catch {}

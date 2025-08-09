@@ -58,6 +58,24 @@ Test infra:
 - Recharts `ResponsiveContainer` is globally mocked in `jest.setup.ts` to avoid zero width/height warnings in jsdom.
 - Pagination and filter flows are covered in `src/components/__tests__/funding-events-list.pagination.test.tsx`.
 
+## Manual Enrichment API (dev/staging)
+
+Endpoint (server-only): `POST /api/companies/[slug]/enrich`
+
+- Returns `202 Accepted` to acknowledge the request. In this MVP, it does not queue a real job yet.
+- Rate limit: simple in-memory window (60s) per IP+slug; returns `429` with `Retry-After` when exceeded.
+- Optional admin token: if `ENRICH_ADMIN_TOKEN` is set in `.env.local`, requests must include header `x-admin-token: $ENRICH_ADMIN_TOKEN`.
+
+Example:
+
+```bash
+curl -i -X POST \
+  -H "x-admin-token: $ENRICH_ADMIN_TOKEN" \
+  http://localhost:3000/api/companies/example-co/enrich
+```
+
+Client wiring: `CompanyBio` uses this endpoint for the "Fetch Bio" button and polls `GET /api/companies/[slug]` every 5s only while `bio_status === 'pending'`.
+
 ## CI (GitHub Actions)
 
 If using GitHub Actions, add repository secrets so live-fetching tests can run against your Supabase project:

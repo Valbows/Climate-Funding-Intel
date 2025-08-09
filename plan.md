@@ -518,8 +518,8 @@ Status: Completed — 2025-08-08T03:27:32Z
        - Guardrails: exclude non-climate domains; respect robots; timeouts; JSON schema with nulls over guesses.
      - Runner: invoked by a small Python entry (`pipeline/enrich_company.py --slug <slug>`) or queued by a background worker; writes to `companies` via service key.
    - P3.5 Frontend/Backend wiring
-     - API `POST /api/companies/[slug]/enrich` (server-only): validates input; enqueues enrichment; returns 202.
-     - Detail page has a fallback "Fetch Bio" button (visible to authenticated admins only) to trigger manual enrichment.
+     - [~] API `POST /api/companies/[slug]/enrich` (server-only): added stub endpoint returning 202 with simple in-memory rate limit and optional `x-admin-token` header. Queuing to be implemented.
+     - [~] Client wiring: `CompanyBio` now POSTs to `/api/companies/[slug]/enrich`; button present (admin gating pending until auth is added).
    - P3.6 Testing
      - Jest: unit tests for `slugify`, `CompanyDetails` rendering, and list-to-detail navigation.
      - Integration: API route returns combined company + events; SWR polling transitions from `pending` to `ready` state (mock Supabase and enrichment responses).
