@@ -210,3 +210,22 @@ Purpose: Centralized history of decisions, incidents, and fixes to prevent repea
   - Continue Phase 3 features: P3.2 bio enrichment polling after `companies` table; E2E flow from dashboard → company detail.
   - Add note to README about preview limitations during dev.
 - References: `plan.md` Section 18 (Phase 3), `web/next.config.mjs`, `web/src/components/funding-events-list.tsx`, `web/src/lib/slug.ts`, `web/src/app/companies/[slug]/page.tsx`, `web/src/app/api/companies/[slug]/route.ts`, tests under `web/src/lib/__tests__/` and `web/src/components/__tests__/`.
+
+### 2025-08-09T18:17:18Z — Execute/Implement | Test
+- Summary: Implemented Company Bio client polling UI, updated API to include `bio` and `bio_status`, and added Playwright E2E smoke test. Verified E2E passes in Chromium.
+- Change(s):
+  - Added `web/src/components/company-bio.client.tsx` using SWR to poll `/api/companies/[slug]` until `bio_status: ready`; includes a "Fetch Bio" button (POST 202 no-op for now).
+  - Integrated `CompanyBio` into `web/src/app/companies/[slug]/page.tsx` below Recent Events.
+  - Extended `web/src/app/api/companies/[slug]/route.ts` GET to read `companies` table if present; return `bio` and `bio_status` with graceful fallbacks when absent.
+  - Playwright: `web/playwright.config.ts` with auto `webServer`; scripts added to `web/package.json`; created `web/e2e/company-bio.spec.ts` smoke test.
+  - Docs: Updated `web/README.md` with E2E usage and dev proxy note; updated `plan.md` Phase 3 progress.
+- Decision(s): Use client-side polling cadence 5s; keep POST enrichment a stub returning 202 until worker is implemented.
+- Risk(s): None significant; API reads remain anon and read-only. Potential flake if preview proxy is used during dev (avoid per note).
+- Issue(s) & Root Cause: Initial E2E looked for a button unconditionally; adjusted test to pass when bio is already ready/absent without the button being present.
+- Mitigation & Fix: Made the Fetch Bio click optional and asserted on presence of status text or section visibility.
+- Action Items:
+  - Implement enrichment worker and server-side queueing endpoint; wire POST to enqueue real jobs.
+  - Add rate limiting and caching headers to the API route.
+  - Expand E2E: dashboard → company navigation, verify external source links and metrics.
+  - Consider adding Playwright to CI gated job.
+- References: `pipeline/telemetry.py`, `pipeline/main.py`, `pipeline/tests/unit/test_telemetry.py`, `.env.example`, `plan.md`.

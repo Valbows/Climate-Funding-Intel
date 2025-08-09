@@ -9,7 +9,10 @@
     "lint": "next lint",
     "test": "jest --passWithNoTests",
     "test:watch": "jest --watch",
-    "test:ci": "jest --ci --reporters=default --coverage=false"
+    "test:ci": "jest --ci --reporters=default --coverage=false",
+    "e2e": "playwright test",
+    "e2e:ui": "playwright test --ui",
+    "e2e:report": "playwright show-report"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.54.0",
@@ -27,6 +30,7 @@
   "devDependencies": {
     "@testing-library/jest-dom": "^6.4.8",
     "@testing-library/react": "^16.0.0",
+    "@playwright/test": "^1.47.2",
     "@types/jest": "^29.5.12",
     "@types/node": "24.2.0",
     "@types/react": "19.1.9",

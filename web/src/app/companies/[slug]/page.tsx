@@ -2,6 +2,7 @@ import React from 'react'
 import Link from 'next/link'
 import { getSupabaseServer } from '@/lib/supabaseServer'
 import { unslugify } from '@/lib/slug'
+import { CompanyBio } from '@/components/company-bio.client'
 
 function formatAmount(n: number | null | undefined) {
   if (n == null) return '—'
@@ -126,6 +127,9 @@ export default async function CompanyPage({ params }: { params: { slug: string }
             </ul>
           )}
         </section>
+
+        {/* Company Bio (client) */}
+        <CompanyBio slug={slug} />
       </main>
     </div>
   )

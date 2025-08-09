@@ -12,6 +12,8 @@ export async function GET(_req: NextRequest, ctx: { params: { slug: string } }) 
   const name = unslugify(slug)
 
   let events: any[] = []
+  let companyBio: string | null = null
+  let bioStatus: 'ready' | 'pending' | 'absent' = 'absent'
   try {
     const supabase = getSupabaseServer()
     const like = `%${name}%`
@@ -35,6 +37,21 @@ export async function GET(_req: NextRequest, ctx: { params: { slug: string } }) 
     }
 
     events = data || []
+    // Attempt to read company bio if `companies` table exists (ignore errors)
+    try {
+      const { data: companyRow, error: companyErr } = await supabase
+        .from('companies')
+        .select('bio, name, website, last_enriched_at, updated_at')
+        .eq('slug', slug)
+        .maybeSingle()
+
+      if (!companyErr && companyRow) {
+        companyBio = companyRow.bio ?? null
+        bioStatus = companyBio ? 'ready' : 'pending'
+      }
+    } catch {
+      // table may not exist yet; keep defaults
+    }
   } catch (e: any) {
     return NextResponse.json({
       company: { name, slug, bio: null, bio_status: 'absent' },
@@ -54,7 +71,7 @@ export async function GET(_req: NextRequest, ctx: { params: { slug: string } }) 
   const sources = Array.from(new Set(events.map((e) => e.source_url).filter(Boolean)))
 
   return NextResponse.json({
-    company: { name: events[0]?.startup_name || name, slug, bio: null, bio_status: 'absent' },
+    company: { name: events[0]?.startup_name || name, slug, bio: companyBio, bio_status: bioStatus },
     events,
     totalRaised,
     lastRound,
@@ -62,4 +79,11 @@ export async function GET(_req: NextRequest, ctx: { params: { slug: string } }) 
     sources,
     error: null,
   }, { status: 200 })
+}
+
+// Stub endpoint for queueing enrichment. In this MVP it returns 202 without side effects.
+export async function POST(_req: NextRequest, ctx: { params: { slug: string } }) {
+  const slug = ctx.params.slug
+  // In a future iteration, this will enqueue a background job using a server key.
+  return NextResponse.json({ queued: true, slug }, { status: 202 })
 }

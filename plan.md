@@ -480,15 +480,19 @@ Status: Completed — 2025-08-08T03:27:32Z
       - [x] pg_cron: schedule nightly refresh of `public.pipeline_runs_daily` at 03:30 UTC (`refresh_pipeline_runs_daily`)
       - [x] pg_cron: daily retention prune at 04:00 UTC (`prune_pipeline_runs_90d`)
       - [x] CI Integration (Telemetry) passing on `main`
-  - Phase 3: Frontend Web App — Status: In Progress — 2025-08-09T17:46:42Z
-    - Progress (as of 2025-08-09T17:46:42Z):
+  - Phase 3: Frontend Web App — Status: In Progress — 2025-08-09T18:17:18Z
+    - Progress (as of 2025-08-09T18:17:18Z):
       - [x] Internal routing to company pages via `next/link`; kept "View Source" icon button opening `source_url` in a new tab (`rel="noopener noreferrer"`).
       - [x] Server-rendered company detail page at `web/src/app/companies/[slug]/page.tsx` querying Supabase, aggregating totals, and listing events with external sources.
       - [x] Slug utilities at `web/src/lib/slug.ts` with unit tests `web/src/lib/__tests__/slug.test.ts`.
       - [x] Funding list link test `web/src/components/__tests__/funding-events-list.link.test.tsx`; pagination behavior/UI adjusted to always render the container when results ≥ 1 to satisfy tests.
-      - [x] API route `web/src/app/api/companies/[slug]/route.ts` returning aggregated company data with `bio_status` placeholder for future enrichment polling.
+      - [x] API route `web/src/app/api/companies/[slug]/route.ts` returning aggregated company data including `bio` and `bio_status` with graceful fallbacks when `companies` table is absent.
       - [x] Example env file `web/.env.local.example` for frontend setup.
-      - [ ] P3.2 bio enrichment polling wiring (pending `companies` table).
+      - [x] P3.2 bio enrichment polling wiring (client + API polling in place; pending enrichment worker/`companies` table):
+        - Client `CompanyBio` with SWR polling every 5s until `bio_status: ready`.
+        - Button to POST to `/api/companies/[slug]` (returns 202) for manual enrichment trigger (no-op for now).
+        - Integrated into company page under Recent Events.
+      - [x] E2E setup (Playwright): config + smoke test for Company Bio section; dev server auto-start via Playwright `webServer`.
       - Dev note: In development, 404s for `/_next/static/*` were observed only in the in-app preview proxy; direct browser requests returned 200. Use a direct browser tab for dev and avoid the preview proxy for Next dev assets.
     - P3.0 (Immediate UX fix): Route event clicks to internal company pages
       - Change `web/src/components/funding-events-list.tsx` rows from external anchors (`source_url`) to internal links using `next/link` -> `/companies/[slug]`.

@@ -41,6 +41,18 @@ npm run test
 npm run test:ci
 ```
 
+### E2E (Playwright)
+
+Playwright is configured to auto-start `next dev` and run smoke tests:
+
+```bash
+# from web/
+npm run e2e           # headless, all browsers
+npm run e2e -- --project=chromium   # single browser
+npm run e2e:ui       # Playwright UI mode
+npm run e2e:report   # open last HTML report
+```
+
 Test infra:
 - SWR cache is isolated per test via `SWRConfig` to avoid cross-test pollution.
 - Recharts `ResponsiveContainer` is globally mocked in `jest.setup.ts` to avoid zero width/height warnings in jsdom.
@@ -61,3 +73,4 @@ Alternatively, configure your workflow to create a `.env.local` before running `
 - Charts: Recharts area chart with dual series and gradients.
 - Fonts: Urbanist via next/font.
 - Colors follow the dark theme from the spec (#111 background, #191919 surfaces, #272727 borders).
+- Dev note: During development, avoid any in-app preview proxy for Next.js `next dev` — it may cause 404s for `/_next/static/*` assets. Use a direct browser tab (e.g., http://localhost:3000).
