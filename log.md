@@ -194,3 +194,19 @@ Purpose: Centralized history of decisions, incidents, and fixes to prevent repea
   - Optional: add alerts on failure (Slack webhook or GH annotations).
   - Proceed to Phase 3: Frontend scaffold (Next.js app, API route, UI components, tests).
 - References: `.github/workflows/ci-integration.yml`, `supabase/sql/001_pipeline_runs.sql`, `002_pipeline_runs_policies.sql`, `003_pipeline_runs_indexes.sql`, `004_pipeline_runs_retention.sql`, `005_pipeline_runs_mview.sql`, `pipeline/tests/integration/test_telemetry_insert.py`, `plan.md`.
+
+### 2025-08-09T17:52:13Z — Test | Operate
+- Summary: Investigated persistent 404s for Next.js dev static assets. Confirmed `next dev` serves `/_next/static/*` correctly (HTTP 200). 404s reproduced only inside in-app preview proxy; not in direct browser. Classified as environment-specific proxy path rewriting/blocking.
+- Change(s):
+  - Updated `plan.md` Phase 3 status to In Progress with progress checklist and a dev note about avoiding in-app preview for Next dev assets.
+  - Verified no custom `basePath`/`assetPrefix` in `web/next.config.mjs` and no `public/_next` conflicts.
+  - Confirmed pages and tests for Phase 3 scaffolding: company detail SSR page, API route, slug utils and tests, list-to-detail navigation test.
+- Decision(s): Use a direct browser tab (Chrome/Safari/Firefox) against `http://localhost:3000` during development. Avoid in-app preview proxy for accurate Next.js static asset behavior.
+- Issue(s) & Root Cause: Preview proxy rewrites/blocks `/_next/*` paths causing 404s; not a Next.js build/config issue.
+- Mitigation & Fix:
+  - Hard reload, clear cache, and unregister any service workers for `localhost:3000`.
+  - Use direct browser access to `next dev`; optionally `rm -rf .next` and restart dev server if stale cache suspected.
+- Action Items:
+  - Continue Phase 3 features: P3.2 bio enrichment polling after `companies` table; E2E flow from dashboard → company detail.
+  - Add note to README about preview limitations during dev.
+- References: `plan.md` Section 18 (Phase 3), `web/next.config.mjs`, `web/src/components/funding-events-list.tsx`, `web/src/lib/slug.ts`, `web/src/app/companies/[slug]/page.tsx`, `web/src/app/api/companies/[slug]/route.ts`, tests under `web/src/lib/__tests__/` and `web/src/components/__tests__/`.

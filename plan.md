@@ -480,8 +480,51 @@ Status: Completed — 2025-08-08T03:27:32Z
       - [x] pg_cron: schedule nightly refresh of `public.pipeline_runs_daily` at 03:30 UTC (`refresh_pipeline_runs_daily`)
       - [x] pg_cron: daily retention prune at 04:00 UTC (`prune_pipeline_runs_90d`)
       - [x] CI Integration (Telemetry) passing on `main`
- - Phase 3: Frontend Web App — Status: Not Started — 2025-08-08T03:40:39Z
-   - Next.js app, API route for events; UI components (Header, Filters, DataTable); SWR refresh; unit + E2E tests.
+  - Phase 3: Frontend Web App — Status: In Progress — 2025-08-09T17:46:42Z
+    - Progress (as of 2025-08-09T17:46:42Z):
+      - [x] Internal routing to company pages via `next/link`; kept "View Source" icon button opening `source_url` in a new tab (`rel="noopener noreferrer"`).
+      - [x] Server-rendered company detail page at `web/src/app/companies/[slug]/page.tsx` querying Supabase, aggregating totals, and listing events with external sources.
+      - [x] Slug utilities at `web/src/lib/slug.ts` with unit tests `web/src/lib/__tests__/slug.test.ts`.
+      - [x] Funding list link test `web/src/components/__tests__/funding-events-list.link.test.tsx`; pagination behavior/UI adjusted to always render the container when results ≥ 1 to satisfy tests.
+      - [x] API route `web/src/app/api/companies/[slug]/route.ts` returning aggregated company data with `bio_status` placeholder for future enrichment polling.
+      - [x] Example env file `web/.env.local.example` for frontend setup.
+      - [ ] P3.2 bio enrichment polling wiring (pending `companies` table).
+      - Dev note: In development, 404s for `/_next/static/*` were observed only in the in-app preview proxy; direct browser requests returned 200. Use a direct browser tab for dev and avoid the preview proxy for Next dev assets.
+    - P3.0 (Immediate UX fix): Route event clicks to internal company pages
+      - Change `web/src/components/funding-events-list.tsx` rows from external anchors (`source_url`) to internal links using `next/link` -> `/companies/[slug]`.
+      - Keep a small "View Source" icon/button per row or in the detail page that opens `source_url` in a new tab with `rel="noopener noreferrer"`.
+      - Compute `slug` from `startup_name` via a shared util (e.g., `slugify(name)`).
+   - P3.1 Company Detail Page (SSR-friendly, Server Component)
+     - New route: `web/src/app/companies/[slug]/page.tsx`.
+     - Data: query Supabase `funding_events` filtered by normalized `startup_name` derived from `slug`.
+       - Show: company name, sector/sub-sector chips, last funding round, total raised (sum of amounts), list of recent events with dates and investors, and external sources.
+       - Style: use brand accent `var(--accent)` for badges/section titles; maintain accessibility (focus rings, roles/ARIA).
+   - P3.2 Company Bio Enrichment (MVP, asynchronous)
+     - Add lightweight API: `GET /api/companies/[slug]` returns joined company profile + aggregated events.
+       - If bio missing/stale (e.g., `last_enriched_at IS NULL OR older than 30d`), enqueue an enrichment job and return current data with `bio_status: pending`.
+     - UI: the detail page renders a placeholder/skeleton for Bio and auto-polls the API (SWR) until `bio_status: ready`.
+   - P3.3 Database: `companies` table (read-only to public; writes by pipeline/service)
+     - Columns (proposed):
+       - `id UUID PK DEFAULT gen_random_uuid()`, `slug TEXT UNIQUE`, `name TEXT NOT NULL`, `website TEXT`, `bio TEXT`, `logo_url TEXT`, `hq_city TEXT`, `hq_country TEXT`, `founded_year INT`, `sectors TEXT[]`, `sources JSONB[]`, `last_enriched_at TIMESTAMPTZ`, `created_at TIMESTAMPTZ DEFAULT now()`, `updated_at TIMESTAMPTZ DEFAULT now()`.
+     - RLS: allow anon `SELECT`; restrict `INSERT/UPDATE` to service role.
+     - Optional view: `company_with_funding_summary` computing `total_raised`, `last_round`, `last_round_date` from `funding_events`.
+   - P3.4 Enrichment Worker (optional now, add next)
+     - New CrewAI agent `Company Enricher` (`pipeline/agents/enricher.py`) with tasks:
+       - Resolve official website (Tavily), scrape About/Overview pages (ScrapeWebsiteTool), and extract bio + metadata.
+       - Guardrails: exclude non-climate domains; respect robots; timeouts; JSON schema with nulls over guesses.
+     - Runner: invoked by a small Python entry (`pipeline/enrich_company.py --slug <slug>`) or queued by a background worker; writes to `companies` via service key.
+   - P3.5 Frontend/Backend wiring
+     - API `POST /api/companies/[slug]/enrich` (server-only): validates input; enqueues enrichment; returns 202.
+     - Detail page has a fallback "Fetch Bio" button (visible to authenticated admins only) to trigger manual enrichment.
+   - P3.6 Testing
+     - Jest: unit tests for `slugify`, `CompanyDetails` rendering, and list-to-detail navigation.
+     - Integration: API route returns combined company + events; SWR polling transitions from `pending` to `ready` state (mock Supabase and enrichment responses).
+     - E2E: navigate from dashboard to company page, verify metrics and source links.
+   - P3.7 Security & UX
+     - No service keys on client; all writes go through server-side routes or pipeline.
+     - External links `rel="noopener noreferrer"`; safe HTML for bios (no HTML injection; plain text/markdown only).
+     - Rate limit enrichment endpoints; add caching headers for `GET /api/companies/[slug]`.
+     - Accessibility: keyboard navigation, visible focus, and ARIA labels.
  - Phase 4: Deployment & Documentation — Status: Not Started — 2025-08-08T03:40:39Z
    - Vercel deploy; enable scheduler; README with architecture diagram and setup instructions.
 
