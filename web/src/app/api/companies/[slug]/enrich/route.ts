@@ -1,4 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { spawn } from 'child_process'
+import path from 'path'
+
+// Ensure Node.js runtime (required for child_process)
+export const runtime = 'nodejs'
 
 // Simple in-memory rate limiter (per-IP + slug), suitable for dev/staging only.
 const WINDOW_MS = 60_000 // 60 seconds
@@ -38,9 +43,35 @@ export async function POST(req: NextRequest, ctx: { params: { slug: string } }) 
   }
   lastCalls.set(key, now)
 
-  // TODO: Enqueue real enrichment job. For now, return 202 Accepted as a stub.
+  // Option A: Dev-only local runner (spawn Python) behind env flag.
+  const enabled = String(process.env.ENRICH_RUNNER_ENABLED || '').toLowerCase() === 'true'
+  if (enabled) {
+    const pythonCmd = process.env.ENRICH_RUNNER_PYTHON || 'python'
+    const runnerCwd = process.env.ENRICH_RUNNER_CWD || path.resolve(process.cwd(), '..')
+    try {
+      const child = spawn(pythonCmd, ['-m', 'pipeline.enrich_company', '--slug', slug], {
+        cwd: runnerCwd,
+        env: { ...process.env },
+        stdio: 'ignore',
+        detached: true,
+      })
+      // Detach from event loop; do not await completion
+      child.unref()
+      return NextResponse.json(
+        { queued: true, slug, mode: 'local-runner' },
+        { status: 202, headers: { 'Cache-Control': 'no-store' } }
+      )
+    } catch (err) {
+      const msg = (err as Error)?.message || 'spawn_failed'
+      const body: Record<string, unknown> = { queued: false, error: 'runner_spawn_failed' }
+      if (process.env.NODE_ENV !== 'production') body.details = msg
+      return NextResponse.json(body, { status: 500, headers: { 'Cache-Control': 'no-store' } })
+    }
+  }
+
+  // Default: return 202 Accepted stub (no side effects) when runner disabled.
   return NextResponse.json(
-    { queued: true, slug },
+    { queued: true, slug, mode: 'stub' },
     { status: 202, headers: { 'Cache-Control': 'no-store' } }
   )
 }

@@ -521,7 +521,10 @@ Status: Completed — 2025-08-08T03:27:32Z
         - Config: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `GEMINI_API_KEY`, optional `SUPABASE_COMPANIES_TABLE` (default `companies`).
       - [x] Developer docs: `pipeline/README.md` with usage and env notes.
    - P3.5 Frontend/Backend wiring
-     - [~] API `POST /api/companies/[slug]/enrich` (server-only): added stub endpoint returning 202 with simple in-memory rate limit and optional `x-admin-token` header. Queuing to be implemented.
+     - [x] API `POST /api/companies/[slug]/enrich` (server-only):
+       - Returns 202; rate-limited (60s per IP+slug); optional `x-admin-token` header.
+       - Option A implemented: when `ENRICH_RUNNER_ENABLED=true`, spawns local Python runner `pipeline/enrich_company.py` in background and responds immediately.
+       - Configurable via `ENRICH_RUNNER_PYTHON` and `ENRICH_RUNNER_CWD`; Node.js runtime enforced for route (`export const runtime = 'nodejs'`).
      - [~] Client wiring: `CompanyBio` now POSTs to `/api/companies/[slug]/enrich`; button present (admin gating pending until auth is added).
    - P3.6 Testing
      - Jest: unit tests for `slugify`, `CompanyDetails` rendering, and list-to-detail navigation.

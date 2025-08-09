@@ -245,3 +245,16 @@ Purpose: Centralized history of decisions, incidents, and fixes to prevent repea
   - Add structured tests for `sanitize_bio` and a mocked integration test for Supabase upsert path.
   - Introduce admin gating for the Fetch Bio button once auth is integrated.
 - References: `pipeline/agents/enricher.py`, `pipeline/enrich_company.py`, `pipeline/README.md`, `plan.md`.
+
+### 2025-08-09T22:42:31Z — Execute/Implement | Web API
+- Summary: Implemented Option A for enrichment: Next.js API route now spawns local Python runner behind an env toggle.
+- Change(s):
+  - Updated `web/src/app/api/companies/[slug]/enrich/route.ts` to `export const runtime = 'nodejs'`, and to spawn `python -m pipeline.enrich_company --slug <slug>` when `ENRICH_RUNNER_ENABLED=true`. Added error handling and `mode` in response.
+  - Updated `web/README.md` with runner toggle docs, required env, and expectations.
+  - Updated `web/.env.local.example` with `ENRICH_RUNNER_ENABLED`, `ENRICH_RUNNER_PYTHON`, `ENRICH_RUNNER_CWD`.
+  - Updated `plan.md` to mark P3.5 API wiring as implemented (Option A behind env flag).
+- Notes:
+  - Default CWD resolves to repo root (one level above `web/`); override via `ENRICH_RUNNER_CWD` if needed.
+  - Ensure `pipeline/.env` is populated and Python deps installed for the runner to succeed.
+  - Rate limit and optional `x-admin-token` remain enforced.
+  - Response includes `{ mode: 'local-runner' | 'stub' }` for clarity in UI/E2E.
