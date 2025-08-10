@@ -89,23 +89,20 @@ def run_once(slug: str) -> Dict[str, Any]:
     llm = build_llm()
     enricher = create_enricher(llm=llm)
 
-    description = (
+    description_template = (
         "Identify the official website for the company with slug '{slug}'.\n"
         "Use web search, then scrape the company's About/Overview page(s) to extract a concise, factual bio.\n"
         "Focus on climate/energy relevance. Avoid speculation or promotional fluff. If unsure, return nulls.\n\n"
-        "OUTPUT STRICTLY AS JSON matching this schema (and nothing else):\n"
-        "{\n"
-        "  \"slug\": \"{slug}\",\n"
-        "  \"website_url\": string | null,\n"
-        "  \"bio\": string | null,\n"
-        "  \"sources\": string[]  // list of URLs consulted\n"
-        "}\n"
+        "OUTPUT STRICTLY AS JSON. Return exactly one object with these keys only (no extra fields, no prose):\n"
+        "- slug: string (must equal '{slug}')\n"
+        "- website_url: string or null\n"
+        "- bio: string or null (1-3 sentences, brand-safe, factual)\n"
+        "- sources: array of strings (fully-qualified https URLs; no duplicates)\n\n"
         "Rules:\n- Prefer official website; if unavailable return website_url=null.\n"
-        "- Bio must be 1-3 sentences, factual, and brand-safe.\n"
-        "- sources must be fully-qualified https URLs, no duplicates.\n"
         "- Respect robots.txt; do not scrape disallowed paths.\n"
         "- If you cannot find credible info, leave fields null.\n"
-    ).format(slug=slug)
+    )
+    description = description_template.replace("{slug}", slug)
 
     task = Task(
         description=description,

@@ -1,4 +1,4 @@
-# NRG Data Dashboard (Web)
+# CLIMATE TRACKER INTEL (Web)
 
 Next.js + TypeScript + Tailwind (shadcn-style) dashboard matching the provided design.
 
@@ -86,6 +86,7 @@ curl -i -X POST \
 ```
 
 Client wiring: `CompanyBio` uses this endpoint for the "Fetch Bio" button and polls `GET /api/companies/[slug]` every 5s only while `bio_status === 'pending'`.
+UI note: after requesting enrichment, a small toast indicates whether the request used the local runner or stub mode.
 
 ## CI (GitHub Actions)
 
@@ -95,6 +96,32 @@ If using GitHub Actions, add repository secrets so live-fetching tests can run a
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
 Alternatively, configure your workflow to create a `.env.local` before running `npm ci`/tests using these secrets. Ensure only anon keys are used on the frontend.
+
+## Deployment (Vercel)
+
+Deploy the Next.js app to Vercel:
+
+1) Project setup
+- Create a new Vercel Project and import this GitHub repo.
+- Framework preset: Next.js. Root directory: `web/`.
+- Build & Install: uses `vercel.json` in `web/` (install `npm ci`, build `npm run build`).
+
+2) Environment Variables (Recommended: Production + Preview)
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- Optional server-only: `ENRICH_ADMIN_TOKEN` (for protecting POST `/api/companies/[slug]/enrich`).
+- Do NOT enable `ENRICH_RUNNER_ENABLED` in production (local runner is dev-only).
+
+3) First deploy
+- Push to `main` to trigger Vercel build, or deploy manually from Vercel UI.
+- Post-deploy check: open `/companies/example-co` and verify page renders; the “Fetch Bio” button POSTs to the enrich API (stub in production unless you set `ENRICH_ADMIN_TOKEN`).
+
+4) CI notes
+- GitHub Actions workflow at `.github/workflows/ci.yml` runs:
+  - `pipeline-pytest` (Python unit test for sanitize_bio).
+  - `web-test` (Jest unit/integration).
+  - `web-e2e-prod` (Playwright Chromium in prod mode via `npm run e2e:prod:chromium`).
+  - Prod-mode E2E uses `E2E_USE_START=true` so Playwright starts `next start` rather than `next dev`.
 
 ## Notes
 - Design approximates the provided layered CSS in a responsive way.

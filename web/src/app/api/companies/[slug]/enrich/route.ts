@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { spawn } from 'child_process'
 import path from 'path'
+import { getSupabaseService } from '@/lib/supabaseService'
 
 // Ensure Node.js runtime (required for child_process)
 export const runtime = 'nodejs'
@@ -69,9 +70,36 @@ export async function POST(req: NextRequest, ctx: { params: { slug: string } }) 
     }
   }
 
+  // Option B: JS fallback — upsert a minimal companies row (no Python needed)
+  const jsFallback = String(process.env.ENRICH_JS_FALLBACK || '').toLowerCase() === 'true'
+  if (jsFallback) {
+    try {
+      const supabase = getSupabaseService()
+      const now = new Date().toISOString()
+      const { error } = await supabase
+        .from('companies')
+        .upsert({ slug, updated_at: now }, { onConflict: 'slug' })
+      if (error) {
+        const body: Record<string, unknown> = { queued: false, error: 'upsert_failed' }
+        if (process.env.NODE_ENV !== 'production') body.details = String(error.message || error)
+        return NextResponse.json(body, { status: 500, headers: { 'Cache-Control': 'no-store' } })
+      }
+      return NextResponse.json(
+        { queued: true, slug, mode: 'js-fallback' },
+        { status: 202, headers: { 'Cache-Control': 'no-store' } }
+      )
+    } catch (err) {
+      const msg = (err as Error)?.message || 'exception'
+      const body: Record<string, unknown> = { queued: false, error: 'js_fallback_exception' }
+      if (process.env.NODE_ENV !== 'production') body.details = msg
+      return NextResponse.json(body, { status: 500, headers: { 'Cache-Control': 'no-store' } })
+    }
+  }
+
   // Default: return 202 Accepted stub (no side effects) when runner disabled.
   return NextResponse.json(
     { queued: true, slug, mode: 'stub' },
     { status: 202, headers: { 'Cache-Control': 'no-store' } }
   )
 }
+

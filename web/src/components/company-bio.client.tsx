@@ -24,12 +24,41 @@ export function CompanyBio({ slug }: { slug: string }) {
   const status = data?.company?.bio_status ?? 'absent'
   const bio = data?.company?.bio ?? null
 
+  const [toast, setToast] = React.useState<{ text: string; tone: 'info' | 'success' | 'error' } | null>(null)
+  React.useEffect(() => {
+    if (!toast) return
+    const t = setTimeout(() => setToast(null), 3000)
+    return () => clearTimeout(t)
+  }, [toast])
+
   async function requestEnrichment() {
     try {
-      await fetch(`/api/companies/${slug}/enrich`, { method: 'POST' })
+      const res = await fetch(`/api/companies/${slug}/enrich`, { method: 'POST' })
+      let mode: string | undefined
+      try {
+        const body = await res.json()
+        mode = body?.mode
+      } catch {}
+      if (res.ok) {
+        if (mode === 'local-runner') {
+          setToast({ text: 'Enrichment queued (local runner).', tone: 'success' })
+        } else if (mode === 'stub') {
+          setToast({ text: 'Request acknowledged (stub mode).', tone: 'info' })
+        } else {
+          setToast({ text: 'Request acknowledged.', tone: 'info' })
+        }
+      } else if (res.status === 429) {
+        setToast({ text: 'Rate limited. Please retry shortly.', tone: 'error' })
+      } else if (res.status === 401) {
+        setToast({ text: 'Unauthorized to run enrichment.', tone: 'error' })
+      } else {
+        setToast({ text: 'Failed to queue enrichment.', tone: 'error' })
+      }
       // Optimistically set to pending and trigger revalidation
       await mutate()
-    } catch {}
+    } catch {
+      setToast({ text: 'Network error while requesting enrichment.', tone: 'error' })
+    }
   }
 
   return (
@@ -54,6 +83,22 @@ export function CompanyBio({ slug }: { slug: string }) {
       {!isLoading && status !== 'ready' && (
         <div className="text-sm text-[color:var(--fg-muted)]">
           {status === 'pending' ? 'Bio is being prepared…' : 'No bio available yet.'}
+        </div>
+      )}
+      {toast && (
+        <div
+          role="status"
+          aria-live="polite"
+          className={
+            'mt-2 text-xs inline-block rounded px-2 py-1 ' +
+            (toast.tone === 'success'
+              ? 'bg-green-900/30 text-green-200'
+              : toast.tone === 'error'
+              ? 'bg-red-900/30 text-red-200'
+              : 'bg-zinc-800 text-zinc-200')
+          }
+        >
+          {toast.text}
         </div>
       )}
     </section>

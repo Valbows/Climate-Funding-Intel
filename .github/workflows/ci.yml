@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  test:
+  pipeline-pytest:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -22,17 +22,67 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('pipeline/requirements.txt') }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('pipeline/tests/unit/**') }}
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      - name: Install dependencies
+      - name: Install pytest only
         run: |
           python -m pip install --upgrade pip
-          pip install -r pipeline/requirements.txt
+          pip install pytest
 
-      - name: Run tests
+      - name: Run unit tests (sanitize_bio)
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: |
-          pytest -q
+          pytest -q pipeline/tests/unit/test_enrich_company.py
+
+  web-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'web/package-lock.json'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Jest tests
+        run: npm run test:ci
+
+  web-e2e-prod:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'web/package-lock.json'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      - name: Run Playwright (prod mode, Chromium)
+        env:
+          # E2E_USE_START handled inside script; set here if needed elsewhere
+          E2E_USE_START: 'true'
+        run: npm run e2e:prod:chromium

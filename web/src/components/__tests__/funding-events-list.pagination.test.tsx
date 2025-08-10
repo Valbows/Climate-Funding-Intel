@@ -147,4 +147,133 @@ describe('FundingEventsList pagination', () => {
     await waitFor(() => expect(screen.getByTestId('fe-pagination')).toHaveTextContent('Page 1 of 3'))
     expect(screen.getByText('P1 Item 1')).toBeInTheDocument()
   })
+
+  test('resets to page 1 when investor changes', async () => {
+    const initial = {
+      events: [
+        { id: 'i1', startup_name: 'Alpha', sub_sector: 'Solar', geography: 'US', funding_date: '2025-01-01', amount_usd: 100 },
+      ],
+      count: 15,
+      page: 1,
+      limit: 10,
+      lastUpdated: '2025-08-08T00:00:00Z',
+      error: null,
+    }
+    const page2 = {
+      events: [
+        { id: 'i2', startup_name: 'Bravo', sub_sector: 'Wind', geography: 'DE', funding_date: '2025-01-02', amount_usd: 200 },
+      ],
+      count: 15,
+      page: 2,
+      limit: 10,
+      lastUpdated: '2025-08-08T00:00:00Z',
+      error: null,
+    }
+    const filtered = {
+      events: [
+        { id: 'ti1', startup_name: 'Tiger One', sub_sector: 'Hydrogen', geography: 'UK', funding_date: '2025-01-03', amount_usd: 300 },
+      ],
+      count: 1,
+      page: 1,
+      limit: 10,
+      lastUpdated: '2025-08-08T00:00:00Z',
+      error: null,
+    }
+
+    const fetchMock = jest.fn((url: string) => {
+      const u = new URL(url, 'http://localhost')
+      const investor = u.searchParams.get('investor') || ''
+      const page = Number(u.searchParams.get('page') || '1')
+      if (investor === 'Tiger') return Promise.resolve({ ok: true, json: async () => filtered })
+      if (page === 2) return Promise.resolve({ ok: true, json: async () => page2 })
+      return Promise.resolve({ ok: true, json: async () => initial })
+    })
+    setFetch(fetchMock)
+
+    const { rerender } = render(
+      <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
+        <FundingEventsList enabled={true} limit={10} />
+      </SWRConfig>
+    )
+
+    // Page 1 -> then go to page 2
+    await waitFor(() => expect(screen.getByTestId('fe-pagination')).toHaveTextContent('Page 1 of 2'))
+    fireEvent.click(screen.getByRole('button', { name: /Next/i }))
+    await waitFor(() => expect(screen.getByTestId('fe-pagination')).toHaveTextContent('Page 2 of 2'))
+    expect(screen.getByText('Bravo')).toBeInTheDocument()
+
+    // Change investor filter -> should reset to page 1
+    rerender(
+      <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
+        <FundingEventsList enabled={true} limit={10} investor="Tiger" />
+      </SWRConfig>
+    )
+    await waitFor(() => expect(screen.getByTestId('fe-pagination')).toHaveTextContent('Page 1 of 1'))
+    expect(screen.getByText('Tiger One')).toBeInTheDocument()
+  })
+
+  test('resets to page 1 when date range changes', async () => {
+    const page1 = {
+      events: [
+        { id: 'd1', startup_name: 'January One', sub_sector: 'Solar', geography: 'US', funding_date: '2025-01-01', amount_usd: 100 },
+      ],
+      count: 15,
+      page: 1,
+      limit: 10,
+      lastUpdated: '2025-08-08T00:00:00Z',
+      error: null,
+    }
+    const page2 = {
+      events: [
+        { id: 'd2', startup_name: 'January Two', sub_sector: 'Wind', geography: 'DE', funding_date: '2025-01-02', amount_usd: 200 },
+      ],
+      count: 15,
+      page: 2,
+      limit: 10,
+      lastUpdated: '2025-08-08T00:00:00Z',
+      error: null,
+    }
+    const newRange = {
+      events: [
+        { id: 'f1', startup_name: 'February Item', sub_sector: 'Hydrogen', geography: 'UK', funding_date: '2025-02-05', amount_usd: 300 },
+      ],
+      count: 1,
+      page: 1,
+      limit: 10,
+      lastUpdated: '2025-08-08T00:00:00Z',
+      error: null,
+    }
+
+    const fetchMock = jest.fn((url: string) => {
+      const u = new URL(url, 'http://localhost')
+      const from = u.searchParams.get('from') || ''
+      const to = u.searchParams.get('to') || ''
+      const page = Number(u.searchParams.get('page') || '1')
+      if (to === '2025-02-28') return Promise.resolve({ ok: true, json: async () => newRange })
+      if (page === 2) return Promise.resolve({ ok: true, json: async () => page2 })
+      return Promise.resolve({ ok: true, json: async () => page1 })
+    })
+    setFetch(fetchMock)
+
+    const { rerender } = render(
+      <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
+        <FundingEventsList enabled={true} limit={10} from="2025-01-01" to="2025-01-31" />
+      </SWRConfig>
+    )
+
+    // Page 1 -> page 2
+    await waitFor(() => expect(screen.getByTestId('fe-pagination')).toHaveTextContent('Page 1 of 2'))
+    fireEvent.click(screen.getByRole('button', { name: /Next/i }))
+    await waitFor(() => expect(screen.getByTestId('fe-pagination')).toHaveTextContent('Page 2 of 2'))
+    expect(screen.getByText('January Two')).toBeInTheDocument()
+
+    // Change date range -> reset to page 1
+    rerender(
+      <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
+        <FundingEventsList enabled={true} limit={10} from="2025-01-01" to="2025-02-28" />
+      </SWRConfig>
+    )
+    await waitFor(() => expect(screen.getByTestId('fe-pagination')).toHaveTextContent('Page 1 of 1'))
+    expect(screen.getByText('February Item')).toBeInTheDocument()
+  })
 })

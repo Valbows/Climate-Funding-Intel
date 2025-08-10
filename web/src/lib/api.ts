@@ -7,6 +7,10 @@ export type DashboardData = {
     totalFunding: string
     highestSector: string
     mostActiveInvestor: string
+    totalFundingDelta: number
+    highestSectorDelta: number
+    mostActiveInvestorDelta: number
+    lastUpdatedRel: string
   }
   cashflow: CashflowPoint[]
   subSectors: SubSector[]
@@ -18,6 +22,10 @@ const FALLBACK: DashboardData = {
     totalFunding: '$59.79 B',
     highestSector: 'EV Charging',
     mostActiveInvestor: 'Peak Capital',
+    totalFundingDelta: 0,
+    highestSectorDelta: 0,
+    mostActiveInvestorDelta: 0,
+    lastUpdatedRel: 'unknown',
   },
   cashflow: [
     { month: 'January', revenue: 1200, expense: 600 },
@@ -41,12 +49,32 @@ const FALLBACK: DashboardData = {
   ],
 }
 
+import { headers } from 'next/headers'
+
 export async function getDashboardData(): Promise<DashboardData> {
-  const base = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.API_BASE_URL
-  const url = base ? `${base}/dashboard` : `/api/dashboard`
+  const baseEnv = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.API_BASE_URL
+  let url: string
+  if (baseEnv) {
+    url = `${baseEnv}/dashboard`
+  } else if (typeof window === 'undefined') {
+    // Server-side: build absolute URL from headers (works in dev and prod)
+    try {
+      const h = headers()
+      const host = h.get('host') || 'localhost:3000'
+      const proto = h.get('x-forwarded-proto') || 'http'
+      url = `${proto}://${host}/api/dashboard`
+    } catch {
+      // Fallback for non-request contexts
+      url = `http://localhost:3000/api/dashboard`
+    }
+  } else {
+    // Client-side (shouldn't be used presently)
+    url = `/api/dashboard`
+  }
 
   try {
-    const res = await fetch(url, { next: { revalidate: 60 } })
+    // Use dynamic fetch to avoid serving cached fallback data in dev
+    const res = await fetch(url, { cache: 'no-store' })
     if (!res.ok) return FALLBACK
     const data = (await res.json()) as Partial<DashboardData>
     return {
@@ -54,6 +82,10 @@ export async function getDashboardData(): Promise<DashboardData> {
         totalFunding: data?.metrics?.totalFunding ?? FALLBACK.metrics.totalFunding,
         highestSector: data?.metrics?.highestSector ?? FALLBACK.metrics.highestSector,
         mostActiveInvestor: data?.metrics?.mostActiveInvestor ?? FALLBACK.metrics.mostActiveInvestor,
+        totalFundingDelta: typeof data?.metrics?.totalFundingDelta === 'number' ? data.metrics.totalFundingDelta : FALLBACK.metrics.totalFundingDelta,
+        highestSectorDelta: typeof data?.metrics?.highestSectorDelta === 'number' ? data.metrics.highestSectorDelta : FALLBACK.metrics.highestSectorDelta,
+        mostActiveInvestorDelta: typeof data?.metrics?.mostActiveInvestorDelta === 'number' ? data.metrics.mostActiveInvestorDelta : FALLBACK.metrics.mostActiveInvestorDelta,
+        lastUpdatedRel: data?.metrics?.lastUpdatedRel ?? FALLBACK.metrics.lastUpdatedRel,
       },
       cashflow: data?.cashflow?.length ? data.cashflow : FALLBACK.cashflow,
       subSectors: data?.subSectors?.length ? data.subSectors : FALLBACK.subSectors,

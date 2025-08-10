@@ -9,6 +9,10 @@ const SAMPLE: DashboardData = {
     totalFunding: '$1.23 B',
     highestSector: 'Solar',
     mostActiveInvestor: 'Alpha Fund',
+    totalFundingDelta: 3.4,
+    highestSectorDelta: 10.7,
+    mostActiveInvestorDelta: 21.7,
+    lastUpdatedRel: '5 mins ago',
   },
   cashflow: [
     { month: 'January', revenue: 100, expense: 50 },

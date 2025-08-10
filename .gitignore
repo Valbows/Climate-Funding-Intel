@@ -12,6 +12,8 @@ venv/
 
 # Pipeline
 pipeline/.env
+pipeline/.venv*/
+pipeline/.venv/
 pipeline/__pycache__/
 pipeline/last_result.txt
 pipeline/dropped_events.json

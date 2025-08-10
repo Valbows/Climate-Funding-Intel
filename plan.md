@@ -480,8 +480,8 @@ Status: Completed — 2025-08-08T03:27:32Z
       - [x] pg_cron: schedule nightly refresh of `public.pipeline_runs_daily` at 03:30 UTC (`refresh_pipeline_runs_daily`)
       - [x] pg_cron: daily retention prune at 04:00 UTC (`prune_pipeline_runs_90d`)
       - [x] CI Integration (Telemetry) passing on `main`
-  - Phase 3: Frontend Web App — Status: In Progress — 2025-08-09T18:17:18Z
-    - Progress (as of 2025-08-09T18:17:18Z):
+  - Phase 3: Frontend Web App — Status: In Progress — 2025-08-09T19:59:08Z
+    - Progress (as of 2025-08-09T20:10:02Z):
       - [x] Internal routing to company pages via `next/link`; kept "View Source" icon button opening `source_url` in a new tab (`rel="noopener noreferrer"`).
       - [x] Server-rendered company detail page at `web/src/app/companies/[slug]/page.tsx` querying Supabase, aggregating totals, and listing events with external sources.
       - [x] Slug utilities at `web/src/lib/slug.ts` with unit tests `web/src/lib/__tests__/slug.test.ts`.
@@ -494,6 +494,7 @@ Status: Completed — 2025-08-08T03:27:32Z
         - Integrated into company page under Recent Events.
       - [x] E2E setup (Playwright): config + smoke test for Company Bio section; dev server auto-start via Playwright `webServer`.
       - Dev note: In development, 404s for `/_next/static/*` were observed only in the in-app preview proxy; direct browser requests returned 200. Use a direct browser tab for dev and avoid the preview proxy for Next dev assets.
+      - [x] Enrichment UI Toast + Tests: client toast indicating enrich POST mode (local-runner or stub), Jest integration tests (stub + local-runner mocked), E2E assertion for toast visibility. E2E runs in prod mode for stability (`npm run e2e:prod:chromium`).
     - P3.0 (Immediate UX fix): Route event clicks to internal company pages
       - Change `web/src/components/funding-events-list.tsx` rows from external anchors (`source_url`) to internal links using `next/link` -> `/companies/[slug]`.
       - Keep a small "View Source" icon/button per row or in the detail page that opens `source_url` in a new tab with `rel="noopener noreferrer"`.
@@ -525,18 +526,22 @@ Status: Completed — 2025-08-08T03:27:32Z
        - Returns 202; rate-limited (60s per IP+slug); optional `x-admin-token` header.
        - Option A implemented: when `ENRICH_RUNNER_ENABLED=true`, spawns local Python runner `pipeline/enrich_company.py` in background and responds immediately.
        - Configurable via `ENRICH_RUNNER_PYTHON` and `ENRICH_RUNNER_CWD`; Node.js runtime enforced for route (`export const runtime = 'nodejs'`).
-     - [~] Client wiring: `CompanyBio` now POSTs to `/api/companies/[slug]/enrich`; button present (admin gating pending until auth is added).
+     - [x] Client wiring: `CompanyBio` now POSTs to `/api/companies/[slug]/enrich`; toast indicates mode; admin gating pending until auth is added.
    - P3.6 Testing
      - Jest: unit tests for `slugify`, `CompanyDetails` rendering, and list-to-detail navigation.
      - Integration: API route returns combined company + events; SWR polling transitions from `pending` to `ready` state (mock Supabase and enrichment responses).
      - E2E: navigate from dashboard to company page, verify metrics and source links.
    - P3.7 Security & UX
-     - No service keys on client; all writes go through server-side routes or pipeline.
-     - External links `rel="noopener noreferrer"`; safe HTML for bios (no HTML injection; plain text/markdown only).
-     - Rate limit enrichment endpoints; add caching headers for `GET /api/companies/[slug]`.
-     - Accessibility: keyboard navigation, visible focus, and ARIA labels.
- - Phase 4: Deployment & Documentation — Status: Not Started — 2025-08-08T03:40:39Z
-   - Vercel deploy; enable scheduler; README with architecture diagram and setup instructions.
+     - [x] No service keys on client; all writes go through server-side routes or pipeline.
+     - [x] External links `rel="noopener noreferrer"`; safe HTML for bios (no HTML injection; plain text/markdown only).
+     - [x] Rate limit enrichment endpoints; add caching headers for `GET /api/companies/[slug]`.
+     - [x] Accessibility: keyboard navigation, visible focus, and ARIA labels.
+ - Phase 4: Deployment & Documentation — Status: In Progress — 2025-08-09T20:10:02Z
+   - [x] CI: GitHub Actions workflow added (`.github/workflows/ci.yml`) with jobs: `pipeline-pytest`, `web-test`, and `web-e2e-prod` (Chromium, prod mode).
+   - [x] Playwright prod-mode stability: `playwright.config.ts` supports `E2E_USE_START=true` to run `npm start`; scripts `e2e:prod`, `e2e:prod:chromium` added.
+   - [x] Vercel config: minimal `web/vercel.json` added; serverless Node runtime already set for enrich route.
+   - [ ] Vercel project setup and first deploy; set env vars: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, optional `ENRICH_ADMIN_TOKEN` (server-only). Ensure `ENRICH_RUNNER_ENABLED` is false in production.
+   - [x] README: add deployment steps and environment variable instructions; include architecture diagram later.
 
 
 ## 19) Acceptance Criteria (per phase)

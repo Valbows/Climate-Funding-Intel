@@ -26,6 +26,7 @@ export type FundingEventsResponse = {
 export type FundingEventsParams = {
   q?: string
   sub_sector?: string
+  investor?: string
   from?: string
   to?: string
   page?: number
@@ -39,6 +40,7 @@ function buildUrl(params: FundingEventsParams): string {
   const qp = new URLSearchParams()
   if (params.q) qp.set('q', params.q)
   if (params.sub_sector) qp.set('sub_sector', params.sub_sector)
+  if (params.investor) qp.set('investor', params.investor)
   if (params.from) qp.set('from', params.from)
   if (params.to) qp.set('to', params.to)
   if (params.page) qp.set('page', String(params.page))

@@ -47,6 +47,34 @@ describe('useFundingEvents', () => {
     expect(calledWith).toBe('/api/funding-events?q=abc&page=2&limit=10')
   })
 
+  test('includes investor and date range in request URL', async () => {
+    const mockJson = {
+      events: [],
+      count: 0,
+      page: 3,
+      limit: 5,
+      lastUpdated: '2025-08-08T00:00:00Z',
+      error: null,
+    }
+    const fetchMock = jest.fn().mockResolvedValue({ ok: true, json: async () => mockJson })
+    ;(globalThis as any).fetch = fetchMock
+
+    render(
+      <HookConsumer
+        params={{ investor: 'Tiger', from: '2025-01-01', to: '2025-02-01', page: 3, limit: 5 }}
+      />
+    )
+
+    await waitFor(() => expect(screen.getByTestId('page')).toHaveTextContent('3'))
+    expect(screen.getByTestId('limit')).toHaveTextContent('5')
+
+    expect(fetchMock).toHaveBeenCalled()
+    const calledWith = fetchMock.mock.calls[0][0] as string
+    expect(calledWith).toBe(
+      '/api/funding-events?investor=Tiger&from=2025-01-01&to=2025-02-01&page=3&limit=5'
+    )
+  })
+
   test('surfaces API error payload as isError', async () => {
     const mockJson = {
       events: [],

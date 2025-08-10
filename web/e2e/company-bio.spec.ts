@@ -13,8 +13,11 @@ test.describe('Company page bio section', () => {
 
     const fetchBtn = page.getByRole('button', { name: 'Fetch Bio' })
     if (await fetchBtn.count()) {
-      // Click should POST 202 in the background; UI remains in pending/absent state
+      // Click should POST 202 in the background; show toast indicating mode
       await fetchBtn.click()
+      const toast = page.getByText(/Enrichment queued \(local runner\)\.|Request acknowledged \(stub mode\)\.|Request acknowledged\.|Rate limited|Unauthorized|Failed to queue|Network error/i)
+      await expect(toast).toBeVisible()
+      // Section status remains coherent
       await expect(page.getByText(/Bio is being prepared|No bio available yet|Loading bio/i)).toBeVisible()
     } else {
       // If no button, either bio is already ready (text content shown) or pending/absent state is rendered.

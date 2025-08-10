@@ -5,7 +5,7 @@ import React from 'react'
 const urbanist = Urbanist({ subsets: ['latin'] })
 
 export const metadata = {
-  title: 'NRG Data Dashboard',
+  title: 'CLIMATE TRACKER INTEL',
   description: 'Energy Grid Sector - Overview',
   icons: {
     icon: '/icon.svg',

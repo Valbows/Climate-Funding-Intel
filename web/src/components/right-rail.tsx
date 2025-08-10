@@ -5,7 +5,7 @@ export function TopSubSectors({ items, onSelect }: { items: SubSector[]; onSelec
     <div className="space-y-4" data-testid="subsectors-section">
       <div>
         <div className="text-xl font-medium">Top Sub-Sectors</div>
-        <div className="text-sm text-[color:var(--fg-muted)]">Energy Grid with highest revenue</div>
+        <div className="text-sm text-[color:var(--fg-muted)]">Energy Grid Highest Funding</div>
       </div>
       <div className="card p-6 space-y-6">
         {items.map((it) => (
