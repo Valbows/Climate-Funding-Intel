@@ -25,6 +25,7 @@ export type FundingEventsResponse = {
 
 export type FundingEventsParams = {
   q?: string
+  geography?: string
   sub_sector?: string
   investor?: string
   from?: string
@@ -39,6 +40,7 @@ function buildUrl(params: FundingEventsParams): string {
   const url = new URL('/api/funding-events', typeof window !== 'undefined' ? window.location.origin : 'http://localhost')
   const qp = new URLSearchParams()
   if (params.q) qp.set('q', params.q)
+  if (params.geography) qp.set('geography', params.geography)
   if (params.sub_sector) qp.set('sub_sector', params.sub_sector)
   if (params.investor) qp.set('investor', params.investor)
   if (params.from) qp.set('from', params.from)
@@ -53,6 +55,9 @@ export function useFundingEvents(params: FundingEventsParams, enabled: boolean =
   const key = enabled ? buildUrl(params) : null
   const { data, error, isLoading, mutate } = useSWR<FundingEventsResponse>(key, fetcher, {
     revalidateOnFocus: false,
+    revalidateOnReconnect: false,
+    revalidateIfStale: false,
+    refreshInterval: 0,
   })
 
   const apiError = data?.error ? new Error(data.error) : null

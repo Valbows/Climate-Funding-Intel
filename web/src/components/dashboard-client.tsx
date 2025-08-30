@@ -12,14 +12,15 @@ export function DashboardClient({ data }: { data: DashboardData }) {
   const [query, setQuery] = useState('')
   const [clientData, setClientData] = useState<DashboardData>(data)
   const [investorFilter, setInvestorFilter] = useState('')
+  const [geoFilter, setGeoFilter] = useState('')
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
 
-  // 30d window for aligning list with metric totals
-  const window30d = useMemo(() => {
+  // 90d window for aligning list with metric totals
+  const window90d = useMemo(() => {
     const now = new Date()
     const dayMs = 24 * 60 * 60 * 1000
-    const from = new Date(now.getTime() - 30 * dayMs).toISOString().slice(0, 10)
+    const from = new Date(now.getTime() - 90 * dayMs).toISOString().slice(0, 10)
     const to = now.toISOString().slice(0, 10)
     return { from, to }
   }, [])
@@ -42,21 +43,23 @@ export function DashboardClient({ data }: { data: DashboardData }) {
     }
   }, [])
 
-  // Refresh metrics client-side to ensure we don't show fallback data if SSR fetch failed or was cached
-  useEffect(() => {
-    let cancelled = false
-    ;(async () => {
-      try {
-        const res = await fetch('/api/dashboard', { cache: 'no-store' })
-        if (!res.ok) return
-        const json = (await res.json()) as DashboardData
-        if (!cancelled) setClientData(json)
-      } catch {}
-    })()
-    return () => {
-      cancelled = true
+  // Manual refresh handler (auto-refresh disabled)
+  const [refreshing, setRefreshing] = useState(false)
+  async function refreshMetrics() {
+    try {
+      setRefreshing(true)
+      const res = await fetch('/api/dashboard', { cache: 'no-store' })
+      if (!res.ok) return
+      const json = (await res.json()) as DashboardData
+      setClientData(json)
+      // Notify other widgets to refresh on demand (e.g., DataStatus)
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('manual-refresh'))
+      }
+    } finally {
+      setRefreshing(false)
     }
-  }, [])
+  }
 
   const filteredSubSectors = useMemo(() => {
     if (!query) return clientData.subSectors
@@ -82,12 +85,20 @@ export function DashboardClient({ data }: { data: DashboardData }) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
-          <span className="ml-auto text-xs text-[color:var(--fg-muted)] flex items-center gap-2">
-            <span className="inline-block h-2 w-2 rounded-full bg-[#FF0404]"></span> live updating
-          </span>
         </label>
         <div className="mt-2 flex justify-end">
-          <DataStatus />
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={refreshMetrics}
+              disabled={refreshing}
+              className="text-xs px-2 py-1 rounded border border-[color:var(--border)] disabled:opacity-50 hover:text-[color:var(--accent)]"
+              aria-label="Refresh dashboard metrics"
+            >
+              {refreshing ? 'Refreshing…' : 'Refresh'}
+            </button>
+            <DataStatus />
+          </div>
         </div>
       </div>
 
@@ -100,7 +111,7 @@ export function DashboardClient({ data }: { data: DashboardData }) {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <MetricCard
-              label="Total Funding (30d)"
+              label="Total Funding (3 mo)"
               value={clientData.metrics.totalFunding}
               subtitle={`Last updated ${clientData.metrics.lastUpdatedRel}`}
               delta={clientData.metrics.totalFundingDelta}
@@ -121,13 +132,14 @@ export function DashboardClient({ data }: { data: DashboardData }) {
 
           <MarketAreaChart data={clientData.cashflow} />
 
-          {/* Live data list from API (aligned to 30d window unless overridden by filters) */}
+          {/* Live data list from API (aligned to 3-month window unless overridden by filters) */}
           <FundingEventsList
             q={query}
+            geography={geoFilter}
             investor={investorFilter}
             limit={10}
-            from={fromDate || window30d.from}
-            to={toDate || window30d.to}
+            from={fromDate || window90d.from}
+            to={toDate || window90d.to}
           />
         </div>
 
@@ -138,7 +150,13 @@ export function DashboardClient({ data }: { data: DashboardData }) {
           />
           <FundingByRegion
             items={filteredRegions}
-            onSelect={(name) => setQuery(name)}
+            onSelect={(name) => {
+              // Selecting a region sets dedicated geography filter, clears conflicting filters,
+              // and mirrors the search box for user feedback
+              setGeoFilter(name)
+              setInvestorFilter('')
+              setQuery(name)
+            }}
           />
         </aside>
       </div>

@@ -6,6 +6,7 @@ import { slugify } from '@/lib/slug'
 
 export type FundingEventsListProps = {
   q?: string
+  geography?: string
   sub_sector?: string
   investor?: string
   from?: string
@@ -31,7 +32,7 @@ function formatDate(s?: string) {
 }
 
 export function FundingEventsList(props: FundingEventsListProps) {
-  const { q, sub_sector, investor, from, to, page = 1, limit = 10, enabled } = props
+  const { q, geography, sub_sector, investor, from, to, page = 1, limit = 10, enabled } = props
   const hasSupabase = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
   const isEnabled = typeof enabled === 'boolean' ? enabled : hasSupabase
   const [currentPage, setCurrentPage] = React.useState<number>(page)
@@ -43,8 +44,8 @@ export function FundingEventsList(props: FundingEventsListProps) {
   React.useEffect(() => {
     setCurrentPage(1)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q, sub_sector, investor, from, to, limit])
-  const { events, isLoading, isError, error, count } = useFundingEvents({ q, sub_sector, investor, from, to, page: currentPage, limit }, isEnabled)
+  }, [q, geography, sub_sector, investor, from, to, limit])
+  const { events, isLoading, isError, error, count, mutate } = useFundingEvents({ q, geography, sub_sector, investor, from, to, page: currentPage, limit }, isEnabled)
   const totalPages = Math.max(1, Math.ceil((count || 0) / limit))
   const canPrev = currentPage > 1
   const canNext = currentPage < totalPages
@@ -53,9 +54,19 @@ export function FundingEventsList(props: FundingEventsListProps) {
     <section aria-labelledby="funding-events-title" data-testid="funding-events">
       <div className="flex items-end justify-between mb-2">
         <div>
-          <h2 id="funding-events-title" className="text-lg font-medium text-[color:var(--accent)]">Recent Funding Events: Last 30 Days</h2>
+          <h2 id="funding-events-title" className="text-lg font-medium text-[color:var(--accent)]">Recent Funding Events: Last 3 Months</h2>
           <p className="text-xs text-[color:var(--fg-muted)]">{count} total</p>
         </div>
+        {isEnabled && (
+          <button
+            type="button"
+            onClick={() => mutate()}
+            className="text-xs px-2 py-1 rounded border border-[color:var(--border)] hover:text-[color:var(--accent)]"
+            aria-label="Refresh funding events"
+          >
+            Refresh
+          </button>
+        )}
       </div>
 
       {!isEnabled && (

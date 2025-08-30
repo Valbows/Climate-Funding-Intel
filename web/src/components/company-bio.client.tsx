@@ -18,7 +18,9 @@ const fetcher = (url: string) => fetch(url).then((r) => r.json() as Promise<Comp
 export function CompanyBio({ slug }: { slug: string }) {
   const { data, isLoading, mutate } = useSWR<CompanyApiResponse>(`/api/companies/${slug}`, fetcher, {
     revalidateOnFocus: false,
-    refreshInterval: (latestData) => (latestData?.company?.bio_status === 'pending' ? 5000 : 0),
+    revalidateOnReconnect: false,
+    revalidateIfStale: false,
+    refreshInterval: 0,
   })
 
   const status = data?.company?.bio_status ?? 'absent'
@@ -65,16 +67,26 @@ export function CompanyBio({ slug }: { slug: string }) {
     <section className="space-y-2">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-medium text-[color:var(--accent)]">Company Bio</h2>
-        {status !== 'ready' && (
+        <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={requestEnrichment}
+            onClick={() => mutate()}
             className="text-xs px-2 py-1 rounded border border-[color:var(--border)] hover:text-[color:var(--accent)]"
-            aria-label="Request enrichment"
+            aria-label="Refresh company bio"
           >
-            Fetch Bio
+            Refresh
           </button>
-        )}
+          {status !== 'ready' && (
+            <button
+              type="button"
+              onClick={requestEnrichment}
+              className="text-xs px-2 py-1 rounded border border-[color:var(--border)] hover:text-[color:var(--accent)]"
+              aria-label="Request enrichment"
+            >
+              Fetch Bio
+            </button>
+          )}
+        </div>
       </div>
       {isLoading && <div className="text-sm text-[color:var(--fg-muted)]">Loading bio…</div>}
       {!isLoading && status === 'ready' && bio && (
